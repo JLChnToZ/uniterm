@@ -1,0 +1,36 @@
+{
+  "name": "uniterm",
+  "version": "0.1.0",
+  "description": "Universal Terminal Emulator",
+  "main": "lib/",
+  "scripts": {
+    "start": "electron .",
+    "rebuild": "electron-rebuild .",
+    "pack": "electron-packager ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JLChnToZ/uniterm.git"
+  },
+  "keywords": [
+    "terminal",
+    "tty",
+    "hterm"
+  ],
+  "author": "Jeremy Lam \"JLChnToZ\"",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JLChnToZ/uniterm/issues"
+  },
+  "homepage": "https://github.com/JLChnToZ/uniterm#readme",
+  "dependencies": {
+    "commander": "^2.9.0",
+    "hterm-umdjs": "^1.1.4",
+    "node-pty": "^0.6.3"
+  },
+  "devDependencies": {
+    "electron": "^1.6.2",
+    "electron-packager": "^8.6.0",
+    "electron-rebuild": "^1.5.7"
+  }
+}
