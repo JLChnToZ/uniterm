@@ -4,9 +4,11 @@
   "description": "Universal Terminal Emulator",
   "main": "lib/",
   "scripts": {
-    "start": "electron .",
+    "start": "electron-forge start",
     "postinstall": "electron-rebuild .",
-    "pack": "electron-packager ."
+    "pack": "electron-packager .",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "repository": {
     "type": "git",
@@ -26,13 +28,47 @@
   "dependencies": {
     "commander": "^2.9.0",
     "dragula": "^3.7.2",
+    "electron-compile": "^6.3.0",
     "electron-tabs": "^0.6.0",
     "hterm-umdjs": "^1.1.4",
     "node-pty": "^0.6.3"
   },
   "devDependencies": {
-    "electron": "^1.6.2",
-    "electron-packager": "^8.6.0",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "babel-preset-env": "^1.3.3",
+    "babel-preset-react": "^6.24.1",
+    "electron-prebuilt-compile": "1.6.2",
     "electron-rebuild": "^1.5.7"
+  },
+  "config": {
+    "forge": {
+      "make_targets": {
+        "win32": [
+          "squirrel"
+        ],
+        "darwin": [
+          "zip"
+        ],
+        "linux": [
+          "deb",
+          "rpm"
+        ]
+      },
+      "electronPackagerConfig": {},
+      "electronWinstallerConfig": {
+        "name": ""
+      },
+      "electronInstallerDebian": {},
+      "electronInstallerRedhat": {},
+      "github_repository": {
+        "owner": "JLChnToZ",
+        "name": "uniterm",
+        "draft": true,
+        "prerelease": true
+      },
+      "windowsStoreConfig": {
+        "packageName": ""
+      }
+    }
   }
 }
