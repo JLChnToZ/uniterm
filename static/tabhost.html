@@ -1,0 +1,73 @@
+<!doctype html>
+<HTML>
+<Head>
+<Title>Termhost</Title>
+</Head>
+<Body>
+<div class="etabs-tabgroup">
+<div class="etabs-tabs"></div>
+<div class="etabs-buttons"></div>
+</div>
+<div class="etabs-views"></div>
+<style>
+@import url(../node_modules/electron-tabs/electron-tabs.css);
+@import url(../node_modules/dragula/dist/dragula.css);
+html, body {
+  height: 100%;
+  border: 0 none;
+  margin: 0;
+  padding: 0;
+}
+</style>
+<script>
+(function() {
+  const { ipcRenderer } = require('electron');
+  const TabGroup = require('electron-tabs');
+  const dragula = require('dragula');
+  let tabCount = 0;
+  function addTab() {
+    const tab = tabGroup.addTab();
+  }
+  function tabAdded(tab, group) {
+    tabCount++;
+    tab.webview.addEventListener('close', () => tab.close(true));
+    tab.webview.addEventListener('page-title-updated', e => {
+      tab.setTitle(e.title);
+      if(tab === tabGroup.getActiveTab())
+        document.title = e.title;
+    });
+    tab.on('closing', tabClosing);
+  }
+  function tabActive(tab, group) {
+    document.title = tab.getTitle();
+  }
+  function tabClosing(tab) {
+    ipcRenderer.send('end', tab.webview.getWebContents().id);
+  }
+  function tabRemoved(tab, group) {
+    tabCount--;
+    if(tabCount <= 0) window.close();
+  }
+  const tabGroup = new TabGroup({
+    ready(tabGroup) {
+      dragula([tabGroup.tabContainer], {
+        direction: 'horizontal'
+      });
+    },
+    newTab: {
+      src: 'index.html',
+      title: 'TTY Host',
+      active: true,
+      webviewAttributes: {
+        nodeintegration: true
+      }
+    }
+  });
+  tabGroup.on('tab-added', tabAdded);
+  tabGroup.on('tab-active', tabActive);
+  tabGroup.on('tab-removed', tabRemoved);
+  ipcRenderer.on('addtab', addTab);
+})();
+</script>
+</Body>
+</HTML>

@@ -1,11 +1,11 @@
 {
   "name": "uniterm",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Universal Terminal Emulator",
   "main": "lib/",
   "scripts": {
     "start": "electron .",
-    "rebuild": "electron-rebuild .",
+    "postinstall": "electron-rebuild .",
     "pack": "electron-packager ."
   },
   "repository": {
@@ -25,6 +25,8 @@
   "homepage": "https://github.com/JLChnToZ/uniterm#readme",
   "dependencies": {
     "commander": "^2.9.0",
+    "dragula": "^3.7.2",
+    "electron-tabs": "^0.6.0",
     "hterm-umdjs": "^1.1.4",
     "node-pty": "^0.6.3"
   },
