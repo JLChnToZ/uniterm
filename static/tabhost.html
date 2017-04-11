@@ -31,6 +31,13 @@ html, body {
   function setTitle(title) {
     document.title = (title.length ? `${title} - ` : '') + 'Uniterm';
   }
+  function dropBlocker(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.dataTransfer)
+      e.dataTransfer.dropEffect = 'none';
+    return false;
+  }
   function tabAdded(tab, group) {
     tabCount++;
     tab.webview.addEventListener('close', () => tab.close(true));
@@ -39,6 +46,8 @@ html, body {
       if(tab === tabGroup.getActiveTab())
         setTitle(e.title);
     });
+    tab.webview.addEventListener('dragover', dropBlocker, false);
+    tab.webview.addEventListener('drop', dropBlocker, false);
     tab.on('closing', tabClosing);
   }
   function tabActive(tab, group) {
@@ -71,6 +80,9 @@ html, body {
   tabGroup.on('tab-active', tabActive);
   tabGroup.on('tab-removed', tabRemoved);
   ipcRenderer.on('addtab', addTab);
+
+  document.addEventListener('dragover', dropBlocker, false);
+  document.addEventListener('drop', dropBlocker, false);
 })();
 </script>
 </Body>

@@ -72,6 +72,15 @@ document.addEventListener('terminalready', e => {
     '#44F', '#F8C', '#4FC', '#FFF'
   ]);
 });
+function dropBlocker(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  if(e.dataTransfer)
+    e.dataTransfer.dropEffect = 'none';
+  return false;
+}
+document.addEventListener('dragover', dropBlocker, false);
+document.addEventListener('drop', dropBlocker, false);
 </script>
 </head>
 </html>
