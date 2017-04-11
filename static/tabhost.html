@@ -43,6 +43,7 @@ html, body {
   }
   function tabActive(tab, group) {
     setTitle(tab.getTitle());
+    tab.webview.focus();
   }
   function tabClosing(tab) {
     ipcRenderer.send('end', tab.webview.getWebContents().id);

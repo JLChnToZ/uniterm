@@ -5,11 +5,11 @@ An experimental cross-platform terminal emulator based on [hterm](https://chromi
 Install
 -------
 ```bash
-$ npm i && npm run rebuild
+$ npm i
 ```
 And then
 ```bash
-$ npm run start
+$ npm start
 ```
 
 You may also pack it:
