@@ -28,6 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
       })
     );
 
+  // Tweak the empty title changes
+  window.defaultTitle = document.title;
+  terminal.setWindowTitle = title => {
+    window.document.title = title.trim() || window.defaultTitle;
+  };
+
   // Apply the teminal to DOM
   terminal.decorate(document.body);
 
@@ -41,6 +47,9 @@ document.addEventListener('terminalready', e => {
 
   // Map terminal IO to IPC channel
   ipcRenderer.on('end', () => window.close());
+  ipcRenderer.on('settitle', (e, title) => {
+    window.document.title = window.defaultTitle = title;
+  });
   ipcRenderer.on('output', (e, data) => io.print(data));
   io.onVTKeystroke = io.sendString =
     ipcRenderer.send.bind(null, 'input');

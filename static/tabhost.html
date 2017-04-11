@@ -26,7 +26,10 @@ html, body {
   const dragula = require('dragula');
   let tabCount = 0;
   function addTab() {
-    const tab = tabGroup.addTab();
+    tabGroup.addTab();
+  }
+  function setTitle(title) {
+    document.title = (title.length ? `${title} - ` : '') + 'Uniterm';
   }
   function tabAdded(tab, group) {
     tabCount++;
@@ -34,12 +37,12 @@ html, body {
     tab.webview.addEventListener('page-title-updated', e => {
       tab.setTitle(e.title);
       if(tab === tabGroup.getActiveTab())
-        document.title = e.title;
+        setTitle(e.title);
     });
     tab.on('closing', tabClosing);
   }
   function tabActive(tab, group) {
-    document.title = tab.getTitle();
+    setTitle(tab.getTitle());
   }
   function tabClosing(tab) {
     ipcRenderer.send('end', tab.webview.getWebContents().id);
