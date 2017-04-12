@@ -5,6 +5,7 @@
 <meta charset="utf-8" />
 <style>
 @import url(../node_modules/bootstrap/dist/css/bootstrap.min.css);
+@import url(../node_modules/bootstrap-colorpicker/dist/css/bootstrap-colorpicker.min.css);
 @import url(../node_modules/bootstrap-material-design/dist/css/bootstrap-material-design.min.css);
 @import url(../node_modules/bootstrap-material-design/dist/css/ripples.min.css);
 body, html { height: 100%; }
@@ -44,6 +45,7 @@ body { padding-top: 64px; }
   const { constructDom } = require('../lib/frontend/constructdom');
   require('arrive');
   require('bootstrap');
+  require('bootstrap-colorpicker');
   require('bootstrap-material-design');
 
   // Initialize the terminal
@@ -59,7 +61,7 @@ body { padding-top: 64px; }
     io.sendString = io.print;
     io.println('Preview terminal\r\nYou may type here to see the result.');
     io.print('$ ');
-    
+
     terminal.installKeyboard();
 
     prefs = terminal.getPrefs();
@@ -192,12 +194,20 @@ body { padding-top: 64px; }
 
   function makeColorPref(container, key, value, description) {
     const { group, id } = makeGroup(container, key);
-    group.appendChild(constructDom('input', {
-      type: 'color', classes: 'form-control',
-      id, value, data: { description }, onchange() {
-        prefs.set(key, this.value);
-      }
-    }));
+    const input = constructDom('div', {
+      classes: ['input-group', 'colorpicker-component'],
+      children: [{
+        tagName: 'input', type: 'text', classes: 'form-control',
+        id, value, data: { description }, onchange() {
+          prefs.set(key, this.value);
+        }
+      }, {
+        tagName: 'span', classes: 'input-group-addon',
+        children: { tagName: 'i' }
+      }]
+    });
+    group.appendChild(input);
+    $(input).colorpicker();
     makeHelper(group, description);
   }
 
