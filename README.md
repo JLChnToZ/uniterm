@@ -14,7 +14,7 @@ $ npm start
 
 You may also pack it:
 ```bash
-$ npm run pack
+$ npm run package
 ```
 
 ```

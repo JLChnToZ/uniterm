@@ -26,11 +26,16 @@
   },
   "homepage": "https://github.com/JLChnToZ/uniterm#readme",
   "dependencies": {
+    "arrive": "^2.3.1",
+    "bootstrap": "^3.3.7",
+    "bootstrap-colorpicker": "^2.5.1",
+    "bootstrap-material-design": "^0.5.10",
     "commander": "^2.9.0",
     "dragula": "^3.7.2",
     "electron-compile": "^6.3.0",
     "electron-tabs": "^0.6.0",
     "hterm-umdjs": "^1.1.4",
+    "jquery": "^3.2.1",
     "node-pty": "^0.6.3"
   },
   "devDependencies": {

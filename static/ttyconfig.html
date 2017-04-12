@@ -1,0 +1,239 @@
+<!doctype html>
+<HTML>
+<Head>
+<Title>Config</Title>
+<meta charset="utf-8" />
+<style>
+@import url(../node_modules/bootstrap/dist/css/bootstrap.min.css);
+@import url(../node_modules/bootstrap-material-design/dist/css/bootstrap-material-design.min.css);
+@import url(../node_modules/bootstrap-material-design/dist/css/ripples.min.css);
+body, html { height: 100%; }
+body { padding-top: 64px; }
+#preview {
+  position: relative;
+  width: 100%;
+  height: 10em;
+}
+</style>
+</Head>
+<Body>
+<nav class="navbar navbar-default navbar-fixed-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" id="about-show" href="#">
+        <h4>Config</h4>
+      </a>
+    </div>
+  </div>
+</nav>
+<div class="container" id="cfg-container">
+	<div class="panel panel-primary">
+		<div class="panel-heading">
+			<h2 class="panel-title">Preview</h2>
+		</div>
+    <div class="panel-body">
+      <div id="preview"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  'use strict';
+  const { hterm, lib } = require('hterm-umdjs');
+  const $ = window.$ = window.jQuery = require('jquery');
+  const { constructDom } = require('../lib/frontend/constructdom');
+  require('arrive');
+  require('bootstrap');
+  require('bootstrap-material-design');
+
+  // Initialize the terminal
+  hterm.defaultStorage = new lib.Storage.Local();
+  const terminal = new hterm.Terminal('default');
+  let prefs;
+
+  const config = document.getElementById('cfg-container');
+
+  terminal.onTerminalReady = () => {
+    const io = terminal.io.push();
+    io.onVTKeystroke = io.print;
+    io.sendString = io.print;
+    io.println('Preview terminal\r\nYou may type here to see the result.');
+    io.print('$ ');
+    
+    terminal.installKeyboard();
+
+    prefs = terminal.getPrefs();
+    require('../lib/frontend/shell-defaults').init(prefs);
+    makeForm(hterm.PreferenceManager, config);
+  };
+
+  $(function() {
+    terminal.decorate(document.getElementById('preview'));
+    $.material.init();
+  });
+
+  function makeForm(prefsMgr, target) {
+    const { categoryDefinitions, defaultPreferences } = prefsMgr;
+    const catContainers = {};
+    for(const cat of categoryDefinitions)
+      makeCategory(catContainers, target, cat);
+    for(let key in defaultPreferences)
+      makePref(catContainers, key, defaultPreferences[key]);
+  }
+
+  function makeCategory(catContainers, root, cat) {
+    const parent = constructDom('div', {
+      classes: ['panel', 'panel-primary'],
+      children: {
+        tagName: 'div',
+        classes: 'panel-heading',
+        children: {
+          tagName: 'h2',
+          className: 'panel-title',
+          children: cat.text
+        }
+      }
+    });
+    const body = constructDom('div', {
+      classes: 'panel-body'
+    });
+    const form = constructDom('form', {
+      role: 'form',
+      onsubmit(e) { e.preventDefault(); }
+    });
+    body.appendChild(form);
+    parent.appendChild(body);
+    root.appendChild(parent);
+    catContainers[cat.id] = body;
+  }
+
+  function makePref(containers, key, pref) {
+    const [category, defaults, options, description] = pref;
+    const container = containers[category];
+    const value = prefs.get(key) || defaults;
+    switch(options) {
+      case 'bool': makeBoolPref(container, key, value, description); break;
+      case 'int': makeIntPref(container, key, value, description); break;
+      case 'url': makeUrlPref(container, key, value, description); break;
+      case 'color': makeColorPref(container, key, value, description); break;
+      case 'value': makeValPref(container, key, value, description); break;
+      default:
+        if(Array.isArray(options)) makeOptionsPref(container, key, value, options, description);
+        break;
+    }
+  }
+
+  function makeGroup(container, key) {
+    const id = `elm${counter()}`;
+    const group = constructDom('div', {
+      classes: ['form-group', 'label-floating'], children: {
+        tagName: 'label',
+        'for': id,
+        classes: 'control-label',
+        children: key
+      }
+    });
+    container.appendChild(group);
+    return { group, id };
+  }
+
+  function makeHelper(group, description) {
+    group.appendChild(constructDom('span', {
+      classes: 'help-block',
+      innerText: description
+    }));
+  }
+
+  function makeBoolPref(container, key, value, description) {
+    const group = constructDom('div', {
+      classes: 'form-group', children: {
+        tagName: 'label', children: {
+          classes: 'checkbox',
+          children: {
+            tagName: 'label',
+            children: [{
+              tagName: 'input',
+              type: 'checkbox',
+              value: 'true',
+              checked: value,
+              onchange() {
+                prefs.set(key, this.checked);
+              }
+            }, ' ', key]
+          }
+        }
+      }
+    });
+    container.appendChild(group);
+    makeHelper(group, description);
+  }
+
+  function makeIntPref(container, key, value, description) {
+    const { group, id } = makeGroup(container, key);
+    group.appendChild(constructDom('input', {
+      type: 'number', classes: 'form-control',
+      id, value, onchange() {
+        prefs.set(key, parseFloat(this.value));
+      }
+    }));
+    makeHelper(group, description);
+  }
+
+  function makeUrlPref(container, key, value, description) {
+    const { group, id } = makeGroup(container, key);
+    group.appendChild(constructDom('input', {
+      type: 'url', classes: 'form-control',
+      id, value, onchange() {
+        prefs.set(key, this.value);
+      }
+    }));
+    makeHelper(group, description);
+  }
+
+  function makeColorPref(container, key, value, description) {
+    const { group, id } = makeGroup(container, key);
+    group.appendChild(constructDom('input', {
+      type: 'color', classes: 'form-control',
+      id, value, data: { description }, onchange() {
+        prefs.set(key, this.value);
+      }
+    }));
+    makeHelper(group, description);
+  }
+
+  function makeValPref(container, key, value, description) {
+    const { group, id } = makeGroup(container, key);
+    group.appendChild(constructDom('textarea', {
+      classes: 'form-control',
+      id, value: JSON.stringify(value),
+      onchange() {
+        prefs.set(key, JSON.parse(this.value));
+      }
+    }));
+    makeHelper(group, description);
+  }
+
+  function makeOptionsPref(container, key, value, options, description) {
+    const { group, id } = makeGroup(container, key);
+    group.appendChild(constructDom('select', {
+      classes: 'form-control',
+      id, onchange() {
+        prefs.set(key, this.value);
+      }, children: options.map(option => ({
+        tagName: 'option',
+        innerText: option,
+        value: option,
+        selected: option === value
+      }))
+    }));
+    makeHelper(group, description);
+  }
+
+  const counter = (function() {
+    let i = 0;
+    return function() { return i++; }
+  })();
+})();
+</script>
+</Body>
+</HTML>

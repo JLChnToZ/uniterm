@@ -25,8 +25,20 @@ html, body {
   const TabGroup = require('electron-tabs');
   const dragula = require('dragula');
   let tabCount = 0;
+  let optionsTab;
   function addTab() {
     tabGroup.addTab();
+  }
+  function showOptionsTab() {
+    if(optionsTab) return;
+    optionsTab = tabGroup.addTab({
+      src: 'ttyconfig.html',
+      title: 'TTY Host',
+      active: true,
+      webviewAttributes: {
+        nodeintegration: true
+      }
+    });
   }
   function setTitle(title) {
     document.title = (title.length ? `${title} - ` : '') + 'Uniterm';
@@ -55,6 +67,8 @@ html, body {
     tab.webview.focus();
   }
   function tabClosing(tab) {
+    if(tab === optionsTab)
+      optionsTab = undefined;
     ipcRenderer.send('end', tab.webview.getWebContents().id);
   }
   function tabRemoved(tab, group) {
@@ -80,6 +94,7 @@ html, body {
   tabGroup.on('tab-active', tabActive);
   tabGroup.on('tab-removed', tabRemoved);
   ipcRenderer.on('addtab', addTab);
+  ipcRenderer.on('showoptions', showOptionsTab);
 
   document.addEventListener('dragover', dropBlocker, false);
   document.addEventListener('drop', dropBlocker, false);
