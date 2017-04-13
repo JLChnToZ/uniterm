@@ -116,6 +116,7 @@ body { padding-top: 64px; }
     switch(options) {
       case 'bool': makeBoolPref(container, key, value, description); break;
       case 'int': makeIntPref(container, key, value, description); break;
+      case 'string': makeStringPref(container, key, value, description); break;
       case 'url': makeUrlPref(container, key, value, description); break;
       case 'color': makeColorPref(container, key, value, description); break;
       case 'value': makeValPref(container, key, value, description); break;
@@ -140,10 +141,12 @@ body { padding-top: 64px; }
   }
 
   function makeHelper(group, description) {
-    group.appendChild(constructDom('span', {
+    const result = constructDom('span', {
       classes: 'help-block',
       innerText: description
-    }));
+    });
+    group.appendChild(result);
+    return result;
   }
 
   function makeBoolPref(container, key, value, description) {
@@ -172,10 +175,30 @@ body { padding-top: 64px; }
 
   function makeIntPref(container, key, value, description) {
     const { group, id } = makeGroup(container, key);
+    let helperBlock;
     group.appendChild(constructDom('input', {
       type: 'number', classes: 'form-control',
       id, value, onchange() {
-        prefs.set(key, parseFloat(this.value));
+        try {
+          prefs.set(key, parseInt(this.value));
+          helperBlock.innerText = description;
+          this.setCustomValidity('');
+        } catch(e) {
+          const msg = e.message || e;
+          helperBlock.innerText = msg;
+          this.setCustomValidity(msg);
+        }
+      }
+    }));
+    helperBlock = makeHelper(group, description);
+  }
+
+  function makeStringPref(container, key, value, description) {
+    const { group, id } = makeGroup(container, key);
+    group.appendChild(constructDom('input', {
+      type: 'text', classes: 'form-control',
+      id, value, onchange() {
+        prefs.set(key, this.value);
       }
     }));
     makeHelper(group, description);
@@ -213,14 +236,23 @@ body { padding-top: 64px; }
 
   function makeValPref(container, key, value, description) {
     const { group, id } = makeGroup(container, key);
+    let helperBlock;
     group.appendChild(constructDom('textarea', {
       classes: 'form-control',
       id, value: JSON.stringify(value),
       onchange() {
-        prefs.set(key, JSON.parse(this.value));
+        try {
+          prefs.set(key, JSON.parse(this.value));
+          helperBlock.innerText = description;
+          this.setCustomValidity('');
+        } catch(e) {
+          const msg = e.message || e;
+          helperBlock.innerText = msg;
+          this.setCustomValidity(msg);
+        }
       }
     }));
-    makeHelper(group, description);
+    helperBlock = makeHelper(group, description);
   }
 
   function makeOptionsPref(container, key, value, options, description) {
