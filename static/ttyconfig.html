@@ -115,6 +115,7 @@ body { padding-top: 64px; }
     const value = prefs.get(key) || defaults;
     switch(options) {
       case 'bool': makeBoolPref(container, key, value, description); break;
+      case 'tristate': makeTristatePref(container, key, value, description); break;
       case 'int': makeIntPref(container, key, value, description); break;
       case 'string': makeStringPref(container, key, value, description); break;
       case 'url': makeUrlPref(container, key, value, description); break;
@@ -253,6 +254,24 @@ body { padding-top: 64px; }
       }
     }));
     helperBlock = makeHelper(group, description);
+  }
+
+  const tristateEntries = [['', null], ['true', true], ['false', false]];
+  function makeTristatePref(container, key, value, description) {
+    const { group, id } = makeGroup(container, key);
+    group.appendChild(constructDom('select', {
+      classes: 'form-control',
+      id, onchange() {
+        prefs.set(key, JSON.parse(this.value));
+      },
+      children: tristateEntries.map(([name, val]) => ({
+        tagName: 'option',
+        innerText: name,
+        value: String(val).valueOf(),
+        selected: val === value
+      }))
+    }));
+    makeHelper(group, description);
   }
 
   function makeOptionsPref(container, key, value, options, description) {
