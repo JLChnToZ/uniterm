@@ -1,6 +1,6 @@
 {
   "name": "uniterm",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Universal Terminal Emulator",
   "main": "lib/",
   "scripts": {
@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/JLChnToZ/uniterm#readme",
   "dependencies": {
+    "argv-split": "^2.0.1",
     "arrive": "^2.3.1",
     "bootstrap": "^3.3.7",
     "bootstrap-colorpicker": "^2.5.1",
