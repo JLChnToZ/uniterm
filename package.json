@@ -6,7 +6,6 @@
   "scripts": {
     "start": "electron-forge start",
     "postinstall": "electron-rebuild .",
-    "pack": "electron-packager .",
     "package": "electron-forge package",
     "make": "electron-forge make"
   },
@@ -35,6 +34,7 @@
     "dragula": "^3.7.2",
     "electron-compile": "^6.3.0",
     "electron-tabs": "^0.6.0",
+    "errno": "^0.1.4",
     "hterm-umdjs": "^1.1.4",
     "jquery": "^3.2.1",
     "node-pty": "^0.6.3"
