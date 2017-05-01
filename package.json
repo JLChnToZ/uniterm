@@ -61,7 +61,18 @@
         ]
       },
       "electronPackagerConfig": {
-        "icon": "icons/uniterm"
+        "icon": "icons/uniterm",
+        "appCopyright": "Copyright (c) Jeremy Lam \"JLChnToZ\" 2017.",
+        "win32metadata": {
+          "ProductName": "uniterm",
+          "InternalName": "uniterm",
+          "OriginalFilename": "uniterm.exe",
+          "FileDescription": "Universal Terminal Emulator",
+          "CompanyName": ""
+        },
+        "asar": {
+          "unpackDir": "node_modules/node-pty/build/**"
+        }
       },
       "electronWinstallerConfig": {
         "name": ""
