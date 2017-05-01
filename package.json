@@ -60,7 +60,9 @@
           "rpm"
         ]
       },
-      "electronPackagerConfig": {},
+      "electronPackagerConfig": {
+        "icon": "icons/uniterm"
+      },
       "electronWinstallerConfig": {
         "name": ""
       },
