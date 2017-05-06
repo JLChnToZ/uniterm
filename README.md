@@ -1,5 +1,6 @@
-Uniterm
+<img src="icons/uniterm.png" width="24" height="24" alt="icon" /> Uniterm
 =======
+
 An experimental cross-platform terminal emulator based on [hterm](https://chromium.googlesource.com/apps/libapps/+/master/hterm), [node-pty](https://github.com/Tyriar/node-pty) and [Electron](https://electron.atom.io). Most of the code here are adopted from my another experimental project [Replio Standalone](https://github.com/JLChnToZ/replio/tree/standalone).
 
 Install
@@ -18,7 +19,7 @@ $ npm run package
 ```
 
 ```
-Usage: uniterm [options] <cmd> [args...]
+Usage: uniterm [options] [--] <cmd> [args...]
 
 Options:
 
