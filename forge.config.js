@@ -22,11 +22,16 @@ module.exports = {
       CompanyName: ''
     },
     asar: {
-      unpackDir: 'node_modules/node-pty/{bin,build}/**'
+      unpackDir: 'node_modules/**/{bin,build}/**'
     },
     ignore: [
-      /\.[t]?log$/i,
-      /forge\.config\.js$/i
+      /\.([a-z0-9]*ignore|gypi?|sln|pdb|md|t?log|cmd|bat|sh|ps1|lib|exp|map|cc|h)$/i,
+      /[\\\/](deps|tests?|example)[\\\/]/i,
+      /\.gitmodules/i,
+      /\.[a-z]+proj(\.filters)?$/i,
+      /forge\.config\.js$/i,
+      /readme[^\\\/]*$/i,
+      /(^|[\\\/])\.[^\\\/]*$/i
     ]
   },
   electronWinstallerConfig: {
