@@ -24,6 +24,7 @@ html, body {
   const { ipcRenderer } = require('electron');
   const TabGroup = require('electron-tabs');
   const dragula = require('dragula');
+  const contextMenu = require('../lib/defaultcontextmenu');
   let tabCount = 0;
   let optionsTab;
   function addTab() {
@@ -60,6 +61,7 @@ html, body {
     });
     tab.webview.addEventListener('dragover', dropBlocker, false);
     tab.webview.addEventListener('drop', dropBlocker, false);
+    tab.webview.addEventListener('dom-ready', () => contextMenu.register(tab.webview, tab.webview.getWebContents()));
     tab.on('closing', tabClosing);
   }
   function tabActive(tab, group) {
