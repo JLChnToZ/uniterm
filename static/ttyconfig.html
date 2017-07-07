@@ -120,7 +120,8 @@ body { padding-top: 64px; }
       case 'string': makeStringPref(container, key, value, description); break;
       case 'url': makeUrlPref(container, key, value, description); break;
       case 'color': makeColorPref(container, key, value, description); break;
-      case 'value': makeValPref(container, key, value, description); break;
+      case 'value': makeValPref(container, key, value, description, true); break;
+      case 'multiline-string': makeValPref(container, key, value, description); break;
       default:
         if(Array.isArray(options)) makeOptionsPref(container, key, value, options, description);
         break;
@@ -235,15 +236,15 @@ body { padding-top: 64px; }
     makeHelper(group, description);
   }
 
-  function makeValPref(container, key, value, description) {
+  function makeValPref(container, key, value, description, parse) {
     const { group, id } = makeGroup(container, key);
     let helperBlock;
     group.appendChild(constructDom('textarea', {
       classes: 'form-control',
-      id, value: JSON.stringify(value),
+      id, value: parse ? JSON.stringify(value) : value,
       onchange() {
         try {
-          prefs.set(key, JSON.parse(this.value));
+          prefs.set(key, parse ? JSON.parse(this.value) : this.value);
           helperBlock.innerText = description;
           this.setCustomValidity('');
         } catch(e) {
