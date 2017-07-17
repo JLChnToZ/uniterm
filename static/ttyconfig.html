@@ -4,10 +4,12 @@
 <Title>Config</Title>
 <meta charset="utf-8" />
 <style>
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 @import url(../node_modules/bootstrap/dist/css/bootstrap.min.css);
 @import url(../node_modules/bootstrap-colorpicker/dist/css/bootstrap-colorpicker.min.css);
 @import url(../node_modules/bootstrap-material-design/dist/css/bootstrap-material-design.min.css);
 @import url(../node_modules/bootstrap-material-design/dist/css/ripples.min.css);
+@import url(../node_modules/dropdown.js/jquery.dropdown.css);
 body, html { height: 100%; }
 body { padding-top: 64px; }
 #preview {
@@ -47,6 +49,7 @@ body { padding-top: 64px; }
   require('bootstrap');
   require('bootstrap-colorpicker');
   require('bootstrap-material-design');
+  require('dropdown.js');
 
   // Initialize the terminal
   hterm.defaultStorage = new lib.Storage.Local();
@@ -59,8 +62,7 @@ body { padding-top: 64px; }
     const io = terminal.io.push();
     io.onVTKeystroke = io.print;
     io.sendString = io.print;
-    io.println('Preview terminal\r\nYou may type here to see the result.');
-    io.print('$ ');
+    io.print('\x1b[?25h\x1b[0mPreview terminal\r\nYou may type here to see the result.\r\n$ ');
 
     terminal.installKeyboard();
 
@@ -72,7 +74,10 @@ body { padding-top: 64px; }
   $(function() {
     terminal.decorate(document.getElementById('preview'));
     $.material.init();
-  });
+    $('select').dropdown({
+      optionClass: 'withripple'
+    });
+  }).dropdown({ autoinit: 'select' });
 
   function makeForm(prefsMgr, target) {
     const { categoryDefinitions, defaultPreferences } = prefsMgr;
@@ -263,12 +268,12 @@ body { padding-top: 64px; }
     group.appendChild(constructDom('select', {
       classes: 'form-control',
       id, onchange() {
-        prefs.set(key, JSON.parse(this.value));
+        prefs.set(key, tristateEntries[this.value][1]);
       },
-      children: tristateEntries.map(([name, val]) => ({
+      children: tristateEntries.map(([name, val], i) => ({
         tagName: 'option',
         innerText: name,
-        value: String(val).valueOf(),
+        value: i,
         selected: val === value
       }))
     }));
@@ -280,11 +285,12 @@ body { padding-top: 64px; }
     group.appendChild(constructDom('select', {
       classes: 'form-control',
       id, onchange() {
-        prefs.set(key, this.value);
-      }, children: options.map(option => ({
+        prefs.set(key, options[this.value]);
+      },
+      children: options.map((option, i) => ({
         tagName: 'option',
         innerText: option,
-        value: option,
+        value: i,
         selected: option === value
       }))
     }));

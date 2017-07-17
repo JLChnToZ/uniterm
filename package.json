@@ -32,6 +32,7 @@
     "bootstrap-material-design": "^0.5.10",
     "commander": "^2.9.0",
     "dragula": "^3.7.2",
+    "dropdown.js": "github:fezvrasta/dropdown.js",
     "electron-compile": "^6.3.0",
     "electron-tabs": "^0.6.0",
     "errno": "^0.1.4",
