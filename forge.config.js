@@ -22,7 +22,7 @@ module.exports = {
       CompanyName: ''
     },
     asar: {
-      unpackDir: 'node_modules/**/{bin,build}/**'
+      unpackDir: 'node_modules/**/{bin,build,backend}/**'
     },
     ignore: [
       /\.([a-z0-9]*ignore|gypi?|sln|pdb|md|t?log|cmd|bat|sh|ps1|lib|exp|map|cc|h)$/i,

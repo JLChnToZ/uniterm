@@ -38,7 +38,8 @@
     "errno": "^0.1.4",
     "hterm-umdjs": "^1.1.4",
     "jquery": "^3.2.1",
-    "node-pty": "^0.6.3"
+    "node-pty": "^0.6.3",
+    "wslpty": "^0.2.1"
   },
   "devDependencies": {
     "babel-plugin-transform-async-to-generator": "^6.24.1",
