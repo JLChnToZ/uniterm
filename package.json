@@ -1,0 +1,50 @@
+{
+  "name": "uniterm",
+  "version": "0.7.0",
+  "description": "Universal Terminal Emulator",
+  "main": "./lib/main.js",
+  "scripts": {
+    "build": "electron-rebuild && tsc",
+    "watch": "tsc -w",
+    "lint": "tslint -c tslint.json -p tsconfig.json",
+    "start": "npm run build && electron .",
+    "rebuild": "electron-rebuild -f",
+    "package": "npm run build && electron-packager . --asar.unpackDir=\"node_modules/{node-pty,wslpty}/**\" --icon=icons/uniterm --out=dist/ --overwrite"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JLChnToZ/uniterm.git"
+  },
+  "keywords": [
+    "terminal",
+    "tty",
+    "hterm"
+  ],
+  "author": "Jeremy Lam \"JLChnToZ\"",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JLChnToZ/uniterm/issues"
+  },
+  "homepage": "https://github.com/JLChnToZ/uniterm#readme",
+  "devDependencies": {
+    "@types/hyperscript": "0.0.3",
+    "@types/shell-escape": "^0.2.0",
+    "@types/yargs": "^12.0.1",
+    "electron": "^3.0.9",
+    "electron-packager": "^12.2.0",
+    "electron-prebuilt-compile": "3.0.6",
+    "electron-rebuild": "^1.8.2",
+    "tslint": "^5.11.0",
+    "typescript": "^3.1.6"
+  },
+  "dependencies": {
+    "default-shell": "^1.0.1",
+    "hyperscript": "^2.0.2",
+    "node-pty": "^0.7.8",
+    "shell-escape": "^0.2.0",
+    "tocas-ui": "^2.3.2",
+    "wslpty": "^0.2.1",
+    "xterm": "^3.8.0",
+    "yargs": "^12.0.2"
+  }
+}

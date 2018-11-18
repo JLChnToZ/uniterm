@@ -1,0 +1,33 @@
+@import url(../node_modules/tocas-ui/dist/tocas.css);
+@import url(../node_modules/xterm/dist/xterm.css);
+
+@font-face {
+  font-family: "powerlinesymbols";
+  src: url("./PowerlineExtraSymbols.woff") format('woff');
+}
+
+@font-face {
+  font-family: "powerlinesymbols";
+  src: url("./PowerlineExtraSymbols.woff") format('woff');
+  font-weight: bold;
+}
+
+body {
+  background-color: black;
+  padding: 0.5em;
+  overflow: hidden;
+}
+
+.pty-tabs>.tabbed.menu>.item {
+  padding: 0.2em;
+}
+
+.pty-container {
+  margin: -0.9em;
+  height: calc(100vh - 3em);
+}
+
+.item>.close.button {
+  margin-left: 0.1em;
+  margin-right: -0.1em;
+}
