@@ -182,6 +182,7 @@ function getAsStringAsync(d: DataTransferItem) {
 
 ipcRenderer.on('create-terminal', (e: IpcMessageEvent, options: TerminalOptions) => {
   new Tab().attach(createBackend(options));
+  remote.getCurrentWindow().focus();
 });
 
 window.addEventListener('beforeunload', e => {
