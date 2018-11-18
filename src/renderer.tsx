@@ -69,7 +69,7 @@ class Tab implements IDisposable {
     tabs.add(this);
   }
 
-  attach(pty: TerminalBase<unknown>) {
+  async attach(pty: TerminalBase<unknown>) {
     if(this.pty || !this.terminal) return;
     this.pty = pty;
     this.disposables.push(
@@ -80,8 +80,22 @@ class Tab implements IDisposable {
       attachDisposable(pty, 'end', this.dispose.bind(this)),
     );
     this.pty.resize(this.terminal.cols, this.terminal.rows);
-    this.pty.spawn();
+    try {
+      await this.pty.spawn();
+    } catch(err) {
+      this.throwError(`Oops... error while launching "${this.pty.path}": ${err.message || err}`);
+    }
     this.onTitle(pty.process);
+  }
+
+  throwError(message: string) {
+    if(!this.terminal) {
+      remote.dialog.showErrorBox('Error', message);
+      return;
+    }
+    this.terminal.writeln(message);
+    this.terminal.writeln('Press any key to exit.');
+    this.disposables.push(this.terminal.addDisposableListener('key', this.dispose.bind(this)));
   }
 
   onEnable() {
@@ -98,8 +112,8 @@ class Tab implements IDisposable {
   }
 
   onDisable() {
-    this.tabElement.className = 'item';
-    this.tabContent.className = 'ts bottom attached inverted tab segment';
+    this.tabElement && (this.tabElement.className = 'item');
+    this.tabContent && (this.tabContent.className = 'ts bottom attached inverted tab segment');
     this.active = false;
   }
 
@@ -112,7 +126,7 @@ class Tab implements IDisposable {
   }
 
   onTitle(title: string) {
-    this.title = title.trim() || this.pty && this.pty.process && this.pty.process.trim() || 'Shell';
+    this.title = title && title.trim() || this.pty && this.pty.process && this.pty.process.trim() || 'Shell';
     this.tabElement && (this.tabElement.firstChild.textContent = this.title);
     if(this.active) setTitle(this.title);
   }
