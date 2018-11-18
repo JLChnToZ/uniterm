@@ -112,7 +112,7 @@ class Tab implements IDisposable {
   }
 
   onTitle(title: string) {
-    this.title = title || this.pty && this.pty.process || 'Shell';
+    this.title = title.trim() || this.pty && this.pty.process && this.pty.process.trim() || 'Shell';
     this.tabElement && (this.tabElement.firstChild.textContent = this.title);
     if(this.active) setTitle(this.title);
   }
