@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, IpcMessageEvent, shell, WebContents } from 'electron';
+import { readFileSync } from 'fs';
 import * as path from 'path';
 import * as yargs from 'yargs';
 import { configFilePath, loadConfig } from './config';
@@ -9,6 +10,9 @@ const windows: { [id: number]: BrowserWindow } = {};
 const readyWindowIds = new Set<number>();
 let activeReadyWindowId: number | undefined;
 const openingWindows: { [id: number]: Array<(value: WebContents) => void> } = {};
+
+const { name: packageName, version } =
+  JSON.parse(readFileSync(path.resolve(__dirname, '../package.json'), 'utf-8'));
 
 const args = yargs
   .usage('Usage: $0 [options] [shellargs..]')
@@ -38,7 +42,11 @@ const args = yargs
       describe: 'Resets the config file',
     },
   })
-  .version()
+  .version(
+    `${packageName} v${version}\n` +
+    Object.keys(process.versions)
+    .map(compoment => `${compoment} v${(process.versions as any)[compoment]}`)
+    .join('\n'))
   .help();
 
 const argv = args.parse(process.argv.slice(1));
