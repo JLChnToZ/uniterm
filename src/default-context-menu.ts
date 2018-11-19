@@ -1,11 +1,11 @@
 import {
-  remote,
+  BrowserWindow,
+  EditFlags,
   Menu,
   MenuItem,
-  BrowserWindow,
-  WebContents,
   MenuItemConstructorOptions,
-  EditFlags
+  remote,
+  WebContents,
 } from 'electron';
 
 interface CustomMenuExtention {
@@ -28,22 +28,22 @@ const contextMenuTemplate: CustomMenuOption[] = [
   { type: 'separator' },
   { role: 'selectall', editFlag: 'canSelectAll' },
   { type: 'separator' },
-  { role: 'toggleDevTools' }
+  { role: 'toggleDevTools' },
 ];
 
 export function getMenuType() {
-  if((typeof process === 'undefined') || !process || (process.type && (process.type === 'renderer'))) {
+  if((typeof process === 'undefined') || !process || (process.type && (process.type === 'renderer')))
     return {
       Menu: remote.Menu,
     };
-  } else {
+  else
     return {
       Menu,
     };
-  }
 }
 
 export function register(window: BrowserWindow, webContents?: WebContents) {
+  // tslint:disable-next-line:no-shadowed-variable
   const { Menu } = getMenuType();
   const contextMenu = Menu.buildFromTemplate(contextMenuTemplate);
   (webContents || window.webContents).on('context-menu', (e, params) => {

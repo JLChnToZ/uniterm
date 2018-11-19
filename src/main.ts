@@ -1,13 +1,14 @@
-import { app, BrowserWindow, ipcMain, IpcMessageEvent, WebContents } from 'electron';
+import { app, BrowserWindow, ipcMain, IpcMessageEvent, shell, WebContents } from 'electron';
 import * as path from 'path';
 import * as yargs from 'yargs';
-import { TerminalOptions } from './terminals/base';
+import { configFilePath, loadConfig } from './config';
 import { register as registerContextMenu } from './default-context-menu';
+import { TerminalOptions } from './terminals/base';
 
 const windows: { [id: number]: BrowserWindow } = {};
 const readyWindowIds = new Set<number>();
 let activeReadyWindowId: number | undefined;
-const openingWindows: { [id: number]: ((value: WebContents) => void)[] } = {};
+const openingWindows: { [id: number]: Array<(value: WebContents) => void> } = {};
 
 const args = yargs
   .usage('Usage: $0 [options] [shellargs..]')
@@ -28,16 +29,29 @@ const args = yargs
       describe: 'Open the shell in a new window',
       alias: 'n',
     },
+    'config': {
+      boolean: true,
+      describe: 'Opens the config file',
+    },
   })
   .version()
   .help();
 
 const argv = args.parse(process.argv.slice(1));
 
-if(!app.requestSingleInstanceLock())
+if(argv.config)
+  loadConfig().then(() => {
+    shell.openItem(configFilePath);
+    app.quit();
+  }, reason => {
+    console.error(reason.message || reason);
+    app.quit();
+  });
+else if(!app.requestSingleInstanceLock())
   app.quit();
 else {
-  app.on('ready', createWindow);
+  loadConfig();
+  app.on('ready', () => openShell(argv, process.cwd()));
   app.on('window-all-closed', () => {
     if(process.platform !== 'darwin')
       app.quit();
@@ -46,7 +60,7 @@ else {
     if(!Object.keys(windows).length)
       createWindow();
   });
-  app.on('second-instance', (e, argv, cwd) => openShell(args.exitProcess(false).parse(argv.slice(1)), cwd));
+  app.on('second-instance', (e, lArgv, cwd) => openShell(args.exitProcess(false).parse(lArgv.slice(1)), cwd));
   ipcMain.on('ready', (e: IpcMessageEvent) => {
     const { id } = e.sender;
     readyWindowIds.add(id);
@@ -56,18 +70,16 @@ else {
       for(const resolve of openingWindows[id])
         resolve(e.sender);
       delete openingWindows[id];
-    } else {
+    } else
       e.sender.send('create-terminal', {});
-    }
   });
-  openShell(argv, process.cwd());
 }
 
 function createWindow() {
   const window = new BrowserWindow({
     height: 600,
     width: 800,
-    icon: path.resolve(__dirname, `../icons/uniterm.${process.platform === 'win32' ? 'ico' : 'png'}`)
+    icon: path.resolve(__dirname, `../icons/uniterm.${process.platform === 'win32' ? 'ico' : 'png'}`),
   });
   const { id } = window;
   window.loadFile(path.join(__dirname, '../static/index.html'));
@@ -95,16 +107,16 @@ function getWindow(newWindow?: boolean) {
   });
 }
 
-async function openShell(argv: yargs.Arguments, cwd: string) {
+async function openShell(lArgv: yargs.Arguments, cwd: string) {
   const env: { [key: string]: string } = {};
-  if(Array.isArray(argv.env) && argv.env.length)
-    for(let i = 0; i < argv.env.length; i += 2)
-      env[argv.env[i]] = argv.env[i + 1];
+  if(Array.isArray(lArgv.env) && lArgv.env.length)
+    for(let i = 0; i < lArgv.env.length; i += 2)
+      env[lArgv.env[i]] = lArgv.env[i + 1];
   const options: TerminalOptions = {
-    path: argv._[0],
-    argv: argv._.slice(1),
-    cwd: argv.cwd || cwd,
-    env
+    path: lArgv._[0],
+    argv: lArgv._.slice(1),
+    cwd: lArgv.cwd || cwd,
+    env,
   };
-  (await getWindow(argv['new-window'])).send('create-terminal', options);
+  (await getWindow(lArgv['new-window'])).send('create-terminal', options);
 }

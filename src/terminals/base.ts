@@ -10,17 +10,17 @@ export interface TerminalOptions extends DuplexOptions {
 }
 
 export abstract class TerminalBase<TPty> extends Duplex {
-  process?: string;
-  pty?: TPty;
-  path?: string;
-  argv?: string[];
-  cols: number = 80;
-  rows: number = 30;
-  env: { [key: string]: string };
-  cwd?: string;
-  encoding: string = 'utf8';
+  public process?: string;
+  public pty?: TPty;
+  public path?: string;
+  public argv?: string[];
+  public cols: number = 80;
+  public rows: number = 30;
+  public env: { [key: string]: string };
+  public cwd?: string;
+  public encoding: string = 'utf8';
 
-  private _buffered?: any[];
+  private buffered?: any[];
 
   protected constructor(options?: TerminalOptions) {
     super(options);
@@ -31,35 +31,34 @@ export abstract class TerminalBase<TPty> extends Duplex {
       this.rows = options.rows || 30;
       this.path = options.path;
       this.argv = options.argv;
-    } else {
+    } else
       this.env = Object.assign({}, process.env);
-    }
   }
 
-  spawn() {}
+  public spawn() {}
 
-  protected _pushData(data: any) {
-    if(this._buffered)
-      this._buffered.push(data);
-    else if(!this.push(data, this.encoding))
-      this._buffered = [];
-    
-  }
-
-  _read() {
-    if(!this._buffered) return;
-    for(let i = 0; i < this._buffered.length; i++)
-      if(!this.push(this._buffered[i], this.encoding)) {
-        this._buffered = this._buffered.slice(i + 1);
+  public _read() {
+    if(!this.buffered) return;
+    for(let i = 0; i < this.buffered.length; i++)
+      if(!this.push(this.buffered[i], this.encoding)) {
+        this.buffered = this.buffered.slice(i + 1);
         return;
       }
-    delete this._buffered;
+    delete this.buffered;
   }
 
-  resize(cols: number, rows: number) {
+  public resize(cols: number, rows: number) {
     this.cols = cols;
     this.rows = rows;
   }
 
-  dropFiles(file: string[]) {}
+  public dropFiles(file: string[]) {}
+
+  protected _pushData(data: any) {
+    if(this.buffered)
+      this.buffered.push(data);
+    else if(!this.push(data, this.encoding))
+      this.buffered = [];
+
+  }
 }

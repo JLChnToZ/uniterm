@@ -1,7 +1,7 @@
-import { spawn, IPty } from 'wslpty';
 import * as escape from 'shell-escape';
-import { TerminalBase, TerminalOptions } from './base';
+import { IPty, spawn } from 'wslpty';
 import { resolveWslPath } from '../pathutils';
+import { TerminalBase, TerminalOptions } from './base';
 
 export class WslPtyShell extends TerminalBase<IPty> {
   get process() { return this.pty ? this.pty.process : undefined; }
@@ -10,13 +10,13 @@ export class WslPtyShell extends TerminalBase<IPty> {
     super(options);
   }
 
-  spawn() {
+  public spawn() {
     if(this.pty) return;
     this.pty = spawn({
       env: this.env,
       cwd: this.cwd,
       cols: this.cols,
-      rows: this.rows
+      rows: this.rows,
     });
     this.pty.on('data', data => this._pushData(data));
     this.pty.on('error', err => this.emit('error', err));
@@ -26,12 +26,12 @@ export class WslPtyShell extends TerminalBase<IPty> {
       this.pty.write(`${this.path} ${this.argv && escape(this.argv) || ''}\r\n`);
   }
 
-  resize(cols: number, rows: number) {
+  public resize(cols: number, rows: number) {
     super.resize(cols, rows);
     if(this.pty) this.pty.resize(cols, rows);
   }
 
-  _write(chunk: any, encoding: string, callback: (err?: Error) => void) {
+  public _write(chunk: any, encoding: string, callback: (err?: Error) => void) {
     if(!this.pty) return callback(new Error('Process is not yet attached.'));
     try {
       if(typeof chunk === 'string') {
@@ -47,13 +47,13 @@ export class WslPtyShell extends TerminalBase<IPty> {
     }
   }
 
-  _destroy(err: Error, callback: () => void) {
+  public _destroy(err: Error, callback: () => void) {
     if(this.pty)
       this.pty.kill();
     callback();
   }
 
-  async dropFiles(files: string[]) {
+  public async dropFiles(files: string[]) {
     if(!files.length) return;
     this.pty.write(escape(await Promise.all(files.map(resolveWslPath))));
   }

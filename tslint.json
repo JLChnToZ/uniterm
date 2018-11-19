@@ -2,15 +2,24 @@
   "extends": "tslint:recommended",
   "rules": {
     "max-line-length": {
-      "options": [
-        120
-      ]
+      "options": [ 120 ]
     },
     "new-parens": true,
+    "arrow-parens": [true, "ban-single-arg-parens"],
     "no-arg": true,
-    "no-bitwise": true,
+    "no-bitwise": false,
     "no-conditional-assignment": true,
-    "no-consecutive-blank-lines": false
+    "no-consecutive-blank-lines": [true, 2],
+    "no-empty": [true, "allow-empty-catch", "allow-empty-functions"],
+    "no-console": false,
+    "arrow-return-shorthand": true,
+    "quotemark": [true, "single", "jsx-double"],
+    "curly": [true, "as-needed"],
+    "interface-name": [true, "never-prefix"],
+    "indent": [true, "spaces", 2],
+    "eofline": true,
+    "object-literal-sort-keys": false,
+    "whitespace": [true, "check-decl", "check-operator", "check-type-operator", "check-type", "check-preblock"]
   },
   "jsRules": {
     "max-line-length": {

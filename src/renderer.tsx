@@ -1,37 +1,54 @@
-import { ipcRenderer, IpcMessageEvent, remote } from 'electron';
+import { IpcMessageEvent, ipcRenderer, remote, shell } from 'electron';
 import * as h from 'hyperscript';
-import { Terminal, IDisposable } from 'xterm';
+import { extname } from 'path';
+import { IDisposable, Terminal } from 'xterm';
+import { fit } from 'xterm/lib/addons/fit/fit';
+import { webLinksInit } from 'xterm/lib/addons/webLinks/webLinks';
+import { winptyCompatInit } from 'xterm/lib/addons/winptyCompat/winptyCompat';
+import { configFile, events, loadConfig, startWatch } from './config';
 import { TerminalBase, TerminalOptions } from './terminals/base';
 import { PtyShell } from './terminals/pty';
 import { WslPtyShell } from './terminals/wslpty';
 
-Terminal.applyAddon(require('xterm/lib/addons/fit/fit'));
-Terminal.applyAddon(require('xterm/lib/addons/fullscreen/fullscreen'));
-Terminal.applyAddon(require('xterm/lib/addons/search/search'));
-Terminal.applyAddon(require('xterm/lib/addons/webLinks/webLinks'));
-Terminal.applyAddon(require('xterm/lib/addons/winptyCompat/winptyCompat'));
-
 const rootContainer = document.body.appendChild(<div className="pty-tabs" />) as HTMLElement;
 const tabContainer = rootContainer.appendChild(<div className="ts top attached mini tabbed menu" />) as HTMLElement;
-const addButton = tabContainer.appendChild(<a className="item" onclick={() => new Tab().attach(createBackend({}))}>
+const addButton = tabContainer.appendChild(<a className="item" onclick={async () => {
+  await loadConfig();
+  new Tab().attach(createBackend({}));
+}}>
   <i className="ts plus icon" />
 </a> as HTMLElement);
 const tabs = new Set<Tab>();
 let activeTab: Tab | undefined;
 
+events.on('config', () => {
+  if(configFile && configFile.terminal)
+    for(const tab of tabs)
+      if(tab.terminal)
+        // tslint:disable-next-line:prefer-const
+        for(let key in configFile.terminal)
+          if(key in configFile.terminal)
+            tab.terminal.setOption(key, (configFile.terminal as any)[key]);
+});
+
 class Tab implements IDisposable {
-  terminal: Terminal;
-  pty: TerminalBase<unknown>;
-  disposables: IDisposable[];
-  title: string;
-  tabElement: HTMLElement;
-  tabContent: HTMLElement;
-  active: boolean;
+  public terminal: Terminal;
+  public pty: TerminalBase<unknown>;
+  public disposables: IDisposable[];
+  public title: string;
+  public defaultTitle: string;
+  public tabElement: HTMLElement;
+  public tabContent: HTMLElement;
+  public active: boolean;
 
   constructor() {
-    this.terminal = new Terminal({
-      fontFamily: 'powerlinesymbols, monospace'
+    this.defaultTitle = 'Shell';
+    this.terminal = new Terminal(configFile && configFile.terminal || {
+      fontFamily: 'powerlinesymbols, monospace',
+      cursorBlink: true,
     });
+    webLinksInit(this.terminal, (e, uri) => shell.openExternal(uri));
+    winptyCompatInit(this.terminal);
     this.disposables = [];
     this.active = true;
     tabContainer.insertBefore(this.tabElement = <a className="item" onclick={this.onEnable.bind(this)}>
@@ -45,6 +62,7 @@ class Tab implements IDisposable {
       const stringData: DataTransferItem[] = [];
       const { items } = e.dataTransfer;
       if(items) {
+        // tslint:disable-next-line:prefer-for-of
         for(let i = 0; i < items.length; i++) {
           const item = items[i];
           switch(item.kind) {
@@ -57,6 +75,7 @@ class Tab implements IDisposable {
         items.clear();
       } else {
         const { files } = e.dataTransfer;
+        // tslint:disable-next-line:prefer-for-of
         for(let i = 0; i < files.length; i++)
           result.push(files[i].path);
         e.dataTransfer.clearData();
@@ -69,8 +88,9 @@ class Tab implements IDisposable {
     tabs.add(this);
   }
 
-  async attach(pty: TerminalBase<unknown>) {
+  public async attach(pty: TerminalBase<unknown>) {
     if(this.pty || !this.terminal) return;
+    if(pty.path) this.defaultTitle = extname(pty.path);
     this.pty = pty;
     this.disposables.push(
       this.terminal.addDisposableListener('data', this.onDataInput.bind(this)),
@@ -85,10 +105,10 @@ class Tab implements IDisposable {
     } catch(err) {
       this.throwError(`Oops... error while launching "${this.pty.path}": ${err.message || err}`);
     }
-    this.onTitle(pty.process);
+    this.onTitle(this.title);
   }
 
-  throwError(message: string) {
+  public throwError(message: string) {
     if(!this.terminal) {
       remote.dialog.showErrorBox('Error', message);
       return;
@@ -98,10 +118,10 @@ class Tab implements IDisposable {
     this.disposables.push(this.terminal.addDisposableListener('key', this.dispose.bind(this)));
   }
 
-  onEnable() {
+  public onEnable() {
     this.tabElement.className = 'active item';
     this.tabContent.className = 'ts active bottom attached inverted tab segment';
-    (this.terminal as any).fit();
+    fit(this.terminal);
     this.terminal.focus();
     this.active = true;
     activeTab = this;
@@ -111,29 +131,29 @@ class Tab implements IDisposable {
         tab.onDisable();
   }
 
-  onDisable() {
-    this.tabElement && (this.tabElement.className = 'item');
-    this.tabContent && (this.tabContent.className = 'ts bottom attached inverted tab segment');
+  public onDisable() {
+    if(this.tabElement) this.tabElement.className = 'item';
+    if(this.tabContent) this.tabContent.className = 'ts bottom attached inverted tab segment';
     this.active = false;
   }
 
-  onDataInput(text: string) {
-    this.pty && this.pty.write(text, 'utf8');
+  public onDataInput(text: string) {
+    if(this.pty) this.pty.write(text, 'utf8');
   }
 
-  onDataOutput(data: string | Buffer) {
-    this.terminal && this.terminal.write(Buffer.isBuffer(data) ? data.toString('utf8') : data);
+  public onDataOutput(data: string | Buffer) {
+    if(this.terminal) this.terminal.write(Buffer.isBuffer(data) ? data.toString('utf8') : data);
   }
 
-  onTitle(title: string) {
-    this.title = title && title.trim() || this.pty && this.pty.process && this.pty.process.trim() || 'Shell';
-    this.tabElement && (this.tabElement.firstChild.textContent = this.title);
+  public onTitle(title: string) {
+    this.title = title && title.trim() || this.pty && this.pty.process && this.pty.process.trim() || this.defaultTitle;
+    if(this.tabElement) this.tabElement.firstChild.textContent = this.title;
     if(this.active) setTitle(this.title);
   }
 
-  dispose() {
+  public dispose() {
     tabs.delete(this);
-    if(activeTab == this) {
+    if(activeTab === this) {
       activeTab = [...tabs][0];
       if(activeTab)
         activeTab.onEnable();
@@ -144,7 +164,7 @@ class Tab implements IDisposable {
     }
     if(this.disposables) {
       for(const disposable of this.disposables)
-        disposable && disposable.dispose();
+        if(disposable) disposable.dispose();
       this.disposables.length = 0;
     }
     if(this.tabContent) {
@@ -194,8 +214,12 @@ function getAsStringAsync(d: DataTransferItem) {
   return new Promise<string>(resolve => d.getAsString(resolve));
 }
 
-ipcRenderer.on('create-terminal', (e: IpcMessageEvent, options: TerminalOptions) => {
-  new Tab().attach(createBackend(options));
+ipcRenderer.on('create-terminal', async (e: IpcMessageEvent, options: TerminalOptions) => {
+  await loadConfig();
+  const tab = new Tab();
+  tab.attach(createBackend(options));
+  if(tab.pty && (tab.pty instanceof WslPtyShell))
+    tab.title = 'WSL Shell';
   remote.getCurrentWindow().focus();
 });
 
@@ -220,7 +244,7 @@ window.addEventListener('close', destroyAllTabs);
 
 window.addEventListener('resize', () => {
   if(activeTab && activeTab.terminal)
-    (activeTab.terminal as any).fit();
+    fit(activeTab.terminal);
 });
 
 document.body.addEventListener('dragover', e => e.preventDefault());
@@ -232,3 +256,5 @@ if(document.readyState !== 'complete')
   });
 else
   ipcRenderer.send('ready');
+
+startWatch();
