@@ -33,15 +33,20 @@ const args = yargs
       boolean: true,
       describe: 'Opens the config file',
     },
+    'reset-config': {
+      boolean: true,
+      describe: 'Resets the config file',
+    },
   })
   .version()
   .help();
 
 const argv = args.parse(process.argv.slice(1));
 
-if(argv.config)
-  loadConfig().then(() => {
-    shell.openItem(configFilePath);
+if(argv.config || argv['reset-config'])
+  loadConfig(argv['reset-config']).then(() => {
+    if(argv.config)
+      shell.openItem(configFilePath);
     app.quit();
   }, reason => {
     console.error(reason.message || reason);

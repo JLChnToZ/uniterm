@@ -8,6 +8,41 @@ export class WslPtyShell extends TerminalBase<IPty> {
 
   constructor(options?: TerminalOptions) {
     super(options);
+
+    // Pass ENV to WSL
+    if(options && options.env) {
+      const { env } = options;
+      const keys = new Map<string, string>();
+
+      // Capitalize variable names
+      for(const key of Object.keys(env)) {
+        const KEY = key.toUpperCase();
+        if(!(KEY in env) && (key in env))
+          env[KEY] = env[key];
+        delete env[key];
+        if(!keys.has(KEY))
+          keys.set(KEY, '');
+      }
+
+      // Grab already exists configuations
+      const wslenv = (this.env.WSLENV || '').split(':');
+      for(const keyFlag of wslenv) {
+        const [key, ...flags] = keyFlag.split('/');
+        const flagSet = new Set<string>(flags);
+        if(keys.has(key))
+          [...keys.get(key)].forEach(flagSet.add, flagSet);
+        keys.set(key, [...flagSet].join(''));
+      }
+
+      // Pass back to wslenv
+      if(keys.size) {
+        this.env.WSLENV = '';
+        for(const [key, flags] of keys)
+          this.env.WSLENV +=
+            (this.env.WSLENV ? ':' : '') +
+            (flags ? `${key}/${flags}` : key);
+      }
+    }
   }
 
   public spawn() {

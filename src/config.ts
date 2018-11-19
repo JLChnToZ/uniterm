@@ -1,4 +1,3 @@
-import { app, remote } from 'electron';
 import { EventEmitter } from 'events';
 import { exists, FSWatcher, readFile, watch, writeFile } from 'fs';
 import { load } from 'js-yaml';
@@ -6,6 +5,7 @@ import { resolve } from 'path';
 import { setTimeout } from 'timers';
 import { promisify } from 'util';
 import { ITerminalOptions } from 'xterm';
+import { getElectron } from './remote-wrapper';
 
 const readFileAsync = promisify(readFile);
 const writeFileAsync = promisify(writeFile);
@@ -18,39 +18,37 @@ export interface ConfigFile {
 
 export const events = new EventEmitter();
 export let configFile: ConfigFile | undefined;
-export const configFilePath = resolve(getApp().getPath('userData'), 'uniterm.yml');
-
-function getApp(): Electron.App {
-  switch(process.type) {
-    case 'renderer':
-      return remote.app;
-    default:
-      return app;
-  }
-}
+export const configFilePath = resolve(getElectron('app').getPath('userData'), 'uniterm.yml');
+const defaultConfigFilePath = resolve(__dirname, '../static/config.default.yml');
 
 let resolved = true;
 let resolveTime = Date.now();
 let isReloading = false;
 let reloadingPromise: Promise<ConfigFile> | undefined;
 
-export function loadConfig(forceReload: boolean = false) {
+export function loadConfig(forceReload: boolean = false, reset: boolean = false) {
   if(isReloading)
     return reloadingPromise!;
   if(configFile && !forceReload)
     return Promise.resolve(configFile);
-  return reloadingPromise = reloadFile();
+  return reloadingPromise = reloadFile(reset);
 }
 
-async function reloadFile() {
+async function reloadFile(reset: boolean) {
   isReloading = true;
   let configFileRaw: string;
-  if(!await existsAsync(configFilePath)) {
-    configFileRaw = await readFileAsync(resolve(__dirname, '../static/config.default.yml'), 'utf-8');
+  if(reset || !await existsAsync(configFilePath)) {
+    configFileRaw = await readFileAsync(defaultConfigFilePath, 'utf-8');
     await writeFileAsync(configFilePath, configFileRaw, 'utf-8');
   } else
     configFileRaw = await readFileAsync(configFilePath, 'utf-8');
-  configFile = load(configFileRaw);
+  try {
+    configFile = load(configFileRaw);
+  } catch {
+    if(!configFile)
+      configFile = load(await readFileAsync(defaultConfigFilePath, 'utf-8'));
+    console.warn('Failed to load config file, will load default config instead');
+  }
   isReloading = false;
   return configFile;
 }

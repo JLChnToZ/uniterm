@@ -1,12 +1,11 @@
 import {
   BrowserWindow,
   EditFlags,
-  Menu,
   MenuItem,
   MenuItemConstructorOptions,
-  remote,
   WebContents,
 } from 'electron';
+import { getElectron } from './remote-wrapper';
 
 interface CustomMenuExtention {
   category?: string;
@@ -31,21 +30,8 @@ const contextMenuTemplate: CustomMenuOption[] = [
   { role: 'toggleDevTools' },
 ];
 
-export function getMenuType() {
-  if((typeof process === 'undefined') || !process || (process.type && (process.type === 'renderer')))
-    return {
-      Menu: remote.Menu,
-    };
-  else
-    return {
-      Menu,
-    };
-}
-
 export function register(window: BrowserWindow, webContents?: WebContents) {
-  // tslint:disable-next-line:no-shadowed-variable
-  const { Menu } = getMenuType();
-  const contextMenu = Menu.buildFromTemplate(contextMenuTemplate);
+  const contextMenu = getElectron('Menu').buildFromTemplate(contextMenuTemplate);
   (webContents || window.webContents).on('context-menu', (e, params) => {
     e.preventDefault();
     let hasEnabledItems = false;

@@ -1,4 +1,5 @@
 import { Duplex, DuplexOptions } from 'stream';
+import { fixPath } from '../pathutils';
 
 export interface TerminalOptions extends DuplexOptions {
   path?: string;
@@ -33,6 +34,7 @@ export abstract class TerminalBase<TPty> extends Duplex {
       this.argv = options.argv;
     } else
       this.env = Object.assign({}, process.env);
+    fixPath(this.env);
   }
 
   public spawn() {}

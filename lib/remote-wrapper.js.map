@@ -1,0 +1,1 @@
+{"version":3,"file":"remote-wrapper.js","sourceRoot":"","sources":["../src/remote-wrapper.ts"],"names":[],"mappings":";;AAAA,mCAAqC;AACrC,qCAAiD;AAEjD,SAAgB,WAAW,CAAgC,IAAO;IAChE,QAAO,OAAO,CAAC,IAAI,EAAE;QACnB,KAAK,UAAU;YACb,OAAO,iBAAM,CAAC,IAAI,CAAC,CAAC;QACtB;YACE,OAAO,QAAQ,CAAC,IAAI,CAAC,CAAC;KACzB;AACH,CAAC;AAPD,kCAOC"}

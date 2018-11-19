@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
 import { exists, stat } from 'fs';
-import { delimiter, extname, resolve as resolvePath } from 'path';
+import { delimiter, dirname, extname, resolve as resolvePath } from 'path';
 import { promisify } from 'util';
 
 const existsAsync = promisify(exists);
@@ -58,4 +58,15 @@ export async function resolveWslPath(originalPath: string): Promise<string> {
       else reject(new Error(`Failed to resolve WSL path: ${code}`));
     });
   });
+}
+
+export function fixPath(env: { [key: string]: string }) {
+  for(const key of Object.keys(process.env)) {
+    if(!/^path$/i.test(key)) continue;
+    if(env[key])
+      env[key] += delimiter + dirname(process.argv0);
+    else
+      env[key] = process.env[key] + delimiter + dirname(process.argv0);
+  }
+  return env;
 }
