@@ -32,6 +32,7 @@ export abstract class TerminalBase<TPty> extends Duplex {
       this.rows = options.rows || 30;
       this.path = options.path;
       this.argv = options.argv;
+      this.cwd = options.cwd;
     } else
       this.env = Object.assign({}, process.env);
     fixPath(this.env);
