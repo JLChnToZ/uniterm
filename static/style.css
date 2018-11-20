@@ -14,7 +14,6 @@
 
 body {
   background-color: black;
-  padding: 0.5em;
   overflow: hidden;
 }
 
@@ -45,7 +44,7 @@ body {
 
 .pty-container {
   margin: -0.9em;
-  height: calc(100vh - 3em);
+  height: calc(100vh - 2em);
 }
 
 .item>.close.button {
