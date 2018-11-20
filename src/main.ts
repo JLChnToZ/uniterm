@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as yargs from 'yargs';
 import { configFilePath, loadConfig } from './config';
 import { register as registerContextMenu } from './default-context-menu';
+import { tryResolvePath } from './pathutils';
 import { TerminalOptions } from './terminals/base';
 
 const windows: { [id: number]: BrowserWindow } = {};
@@ -130,7 +131,7 @@ async function openShell(lArgv: yargs.Arguments, cwd: string) {
   const options: TerminalOptions = {
     path: lArgv._[0],
     argv: lArgv._.slice(1),
-    cwd: lArgv.cwd || cwd,
+    cwd: tryResolvePath(cwd, lArgv.cwd),
     env,
   };
   (await getWindow(lArgv['new-window'])).send('create-terminal', options);

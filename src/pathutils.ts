@@ -60,6 +60,18 @@ export async function resolveWslPath(originalPath: string): Promise<string> {
   });
 }
 
+export function tryResolvePath(cwd: string, target?: string) {
+  try {
+    if(!target)
+      return cwd;
+    if(process.platform === 'win32' && /^[\/\~]/.test(target))
+      return target;
+    return resolvePath(cwd, target);
+  } catch {
+    return cwd;
+  }
+}
+
 export function fixPath(env: { [key: string]: string }) {
   for(const key of Object.keys(process.env)) {
     if(!/^path$/i.test(key)) continue;
