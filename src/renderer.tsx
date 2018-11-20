@@ -10,25 +10,70 @@ import { TerminalBase, TerminalOptions } from './terminals/base';
 import { PtyShell } from './terminals/pty';
 import { WslPtyShell } from './terminals/wslpty';
 
-const rootContainer = document.body.appendChild(<div className="pty-tabs" />) as HTMLElement;
-const tabContainer = rootContainer.appendChild(<div className="ts top attached mini tabbed menu" />) as HTMLElement;
-const addButton = tabContainer.appendChild(<a className="item" onclick={async () => {
-  await loadConfig();
-  new Tab().attach(createBackend({}));
-}}>
-  <i className="ts plus icon" />
-</a> as HTMLElement);
+let rootContainer: HTMLElement;
+let tabContainer: HTMLElement;
+let addButton: HTMLElement;
+let maximizeIcon: HTMLElement;
+rootContainer = document.body.appendChild(<div className="pty-tabs">
+  <div className="ts top attached mini tabbed menu">
+    {process.platform === 'darwin' ?
+      <div className="window-control-mac" /> : null}
+    {tabContainer = <div className="flex">{
+      addButton = <a className="item" onclick={async () => {
+        await loadConfig();
+        new Tab().attach(createBackend({}));
+      }}>
+        <i className="ts plus icon" />
+      </a> as HTMLElement
+    }</div> as HTMLElement}
+    <div className="drag" />
+    {process.platform !== 'darwin' ? (browserWindow => {
+      browserWindow.on('maximize', changeMaximizeIcon);
+      browserWindow.on('unmaximize', changeMaximizeIcon);
+      browserWindow.on('restore', changeMaximizeIcon);
+      return [
+        <a className="item"
+          onclick={() => browserWindow.minimize()}>
+            <i className="ts window minimize icon" />
+        </a>,
+        <a className="item"
+          onclick={() => {
+            if(browserWindow.isMaximized())
+              browserWindow.unmaximize();
+            else
+              browserWindow.maximize();
+          }}>
+          {maximizeIcon = <i className="ts window maximize icon" /> as HTMLElement}
+        </a>,
+        <a className="negative item"
+          onclick={() => browserWindow.close()}>
+          <i className="ts close icon" />
+        </a>,
+      ];
+    })(remote.getCurrentWindow()) : null}
+  </div>
+</div> as HTMLElement);
+
+function changeMaximizeIcon() {
+  if(maximizeIcon)
+    maximizeIcon.className =
+      `ts window ${remote.getCurrentWindow().isMaximized() ? 'restore' : 'maximize'} icon`;
+}
+changeMaximizeIcon();
+
 const tabs = new Set<Tab>();
 let activeTab: Tab | undefined;
 
 events.on('config', () => {
   if(configFile && configFile.terminal)
     for(const tab of tabs)
-      if(tab.terminal)
+      if(tab.terminal) {
         // tslint:disable-next-line:prefer-const
         for(let key in configFile.terminal)
           if(key in configFile.terminal)
             tab.terminal.setOption(key, (configFile.terminal as any)[key]);
+        fit(tab.terminal);
+      }
 });
 
 class Tab implements IDisposable {
@@ -51,9 +96,17 @@ class Tab implements IDisposable {
     winptyCompatInit(this.terminal);
     this.disposables = [];
     this.active = true;
-    tabContainer.insertBefore(this.tabElement = <a className="item" onclick={this.onEnable.bind(this)}>
+    tabContainer.insertBefore(this.tabElement = <a className="item" onclick={e => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.onEnable();
+    }}>
       {''}
-      <a className="ts small negative close button" onclick={this.dispose.bind(this)} />
+      <a className="ts small negative close button" onclick={e => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.dispose();
+      }} />
     </a> as HTMLElement, addButton);
     this.tabContent = <div ondrop={async e => {
       e.preventDefault();

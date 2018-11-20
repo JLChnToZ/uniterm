@@ -93,6 +93,8 @@ function createWindow() {
     height: 600,
     width: 800,
     icon: path.resolve(__dirname, `../icons/uniterm.${process.platform === 'win32' ? 'ico' : 'png'}`),
+    frame: false,
+    titleBarStyle: 'hiddenInset',
   });
   const { id } = window;
   window.loadFile(path.join(__dirname, '../static/index.html'));
