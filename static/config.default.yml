@@ -92,7 +92,7 @@ terminal:
 
   # The amount of scrollback in the terminal. Scrollback is the amount of rows
   # that are retained when lines are scrolled beyond the initial viewport.
-  scrollback: 0
+  scrollback: 1000
 
   # The size of tab stops in the terminal.
   tabStopWidth: 4
