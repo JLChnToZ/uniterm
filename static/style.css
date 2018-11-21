@@ -22,6 +22,7 @@ body {
   display: flex;
   flex: auto;
   min-width: 10em;
+  margin-top: 5px;
 }
 
 .pty-tabs>.tabbed.menu .flex {
@@ -39,7 +40,7 @@ body {
 }
 
 .pty-tabs>.tabbed.menu .item {
-  padding: 0.2em;
+  padding: 0.5em;
 }
 
 .pty-container {
@@ -47,9 +48,12 @@ body {
   height: calc(100vh - 2em);
 }
 
-.item>.close.button {
-  margin-left: 0.1em;
-  margin-right: -0.1em;
+.item>.close.button:last-child {
+  margin-left: 0.5em;
+}
+
+i.icon:last-child {
+  margin: 0;
 }
 
 ::-webkit-scrollbar {

@@ -1,7 +1,7 @@
 import { IpcMessageEvent, ipcRenderer, remote, shell } from 'electron';
 import * as h from 'hyperscript';
 import { extname } from 'path';
-import { IDisposable, Terminal } from 'xterm';
+import { IDisposable, ITerminalOptions, Terminal } from 'xterm';
 import { fit } from 'xterm/lib/addons/fit/fit';
 import { webLinksInit } from 'xterm/lib/addons/webLinks/webLinks';
 import { winptyCompatInit } from 'xterm/lib/addons/winptyCompat/winptyCompat';
@@ -65,15 +65,19 @@ const tabs = new Set<Tab>();
 let activeTab: Tab | undefined;
 
 events.on('config', () => {
-  if(configFile && configFile.terminal)
-    for(const tab of tabs)
-      if(tab.terminal) {
-        // tslint:disable-next-line:prefer-const
-        for(let key in configFile.terminal)
-          if(key in configFile.terminal)
-            tab.terminal.setOption(key, (configFile.terminal as any)[key]);
-        fit(tab.terminal);
+  if(configFile && configFile.terminal) {
+    if(!tabs.size) return;
+    const keys = Object.keys(configFile.terminal) as Array<keyof ITerminalOptions>;
+    for(const tab of tabs) {
+      if(!tab.terminal) continue;
+      for(const key of keys) {
+        const value = configFile.terminal[key];
+        if(tab.terminal.getOption(key) !== value)
+          tab.terminal.setOption(key, value);
       }
+      fit(tab.terminal);
+    }
+  }
 });
 
 class Tab implements IDisposable {
