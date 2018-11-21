@@ -108,6 +108,10 @@ function createWindow() {
     if(activeReadyWindowId === id)
       activeReadyWindowId = [...readyWindowIds][0];
   });
+  window.on('focus', () => {
+    if(readyWindowIds.has(id))
+      activeReadyWindowId = id;
+  });
   return id;
 }
 
