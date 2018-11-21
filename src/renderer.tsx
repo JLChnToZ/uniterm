@@ -65,18 +65,29 @@ const tabs = new Set<Tab>();
 let activeTab: Tab | undefined;
 
 events.on('config', () => {
-  if(configFile && configFile.terminal) {
-    if(!tabs.size) return;
-    const keys = Object.keys(configFile.terminal) as Array<keyof ITerminalOptions>;
+  if(!configFile || !configFile.terminal) return;
+  const { terminal: options } = configFile;
+  if(tabs.size) {
+    const keys = Object.keys(options) as Array<keyof ITerminalOptions>;
     for(const tab of tabs) {
       if(!tab.terminal) continue;
+      const { terminal } = tab;
       for(const key of keys) {
-        const value = configFile.terminal[key];
-        if(tab.terminal.getOption(key) !== value)
-          tab.terminal.setOption(key, value);
+        const value = options[key];
+        if(terminal.getOption(key) !== value)
+          terminal.setOption(key, value);
       }
-      fit(tab.terminal);
+      fit(terminal);
     }
+  }
+  const { style } = document.body;
+  if(options.theme) {
+    const { theme } = options;
+    style.backgroundColor = theme.background || 'inherit';
+    style.color = theme.foreground || 'inherit';
+  } else {
+    style.backgroundColor = 'inherit';
+    style.color = 'inherit';
   }
 });
 

@@ -50,6 +50,7 @@ async function reloadFile(reset: boolean) {
     console.warn('Failed to load config file, will load default config instead');
   }
   isReloading = false;
+  events.emit('config', configFile);
   return configFile;
 }
 
@@ -65,7 +66,6 @@ export function startWatch() {
       while(Date.now() - resolveTime < 100)
         await delay(100);
       await loadConfig(true);
-      events.emit('config', configFile);
     } finally {
       resolved = true;
     }
