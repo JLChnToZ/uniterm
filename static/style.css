@@ -43,9 +43,16 @@ body {
   padding: 0.5em;
 }
 
+.pty-tabs>.tab.segment {
+  padding: 0;
+}
+
 .pty-container {
-  margin: -0.9em;
-  height: calc(100vh - 2.5em);
+  position: fixed;
+  top: 2.5em;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .item>.close.button:last-child {
