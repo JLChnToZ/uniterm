@@ -58,7 +58,7 @@ const args = yargs
 const argv = args.parse(process.argv.slice(1));
 
 if(argv.config || argv['reset-config'])
-  loadConfig(argv['reset-config']).then(() => {
+  loadConfig(false, argv['reset-config']).then(() => {
     if(argv.config)
       shell.openItem(configFilePath);
     app.quit();

@@ -14,12 +14,15 @@ const delay = promisify(setTimeout);
 
 export interface ConfigFile {
   terminal: ITerminalOptions;
+  mods?: string[];
 }
 
 export const events = new EventEmitter();
 export let configFile: ConfigFile | undefined;
-export const configFilePath = resolve(getElectron('app').getPath('userData'), 'uniterm.yml');
-const defaultConfigFilePath = resolve(__dirname, '../static/config.default.yml');
+const userData = getElectron('app').getPath('userData');
+export const configFilePath = resolve(userData, 'uniterm.yml');
+let rawDefaultConfigFile: string | undefined;
+let defaultConfigFile: ConfigFile | undefined;
 
 let resolved = true;
 let resolveTime = Date.now();
@@ -34,19 +37,30 @@ export function loadConfig(forceReload: boolean = false, reset: boolean = false)
   return reloadingPromise = reloadFile(reset);
 }
 
+async function loadDefaultFile() {
+  if(!rawDefaultConfigFile) {
+    rawDefaultConfigFile =
+      await readFileAsync(resolve(__dirname, '../static/config.default.yml'), 'utf-8');
+    rawDefaultConfigFile = rawDefaultConfigFile.replace(/\$relative_path/g, userData);
+    defaultConfigFile = load(rawDefaultConfigFile);
+  }
+  return defaultConfigFile;
+}
+
 async function reloadFile(reset: boolean) {
   isReloading = true;
   let configFileRaw: string;
   if(reset || !await existsAsync(configFilePath)) {
-    configFileRaw = await readFileAsync(defaultConfigFilePath, 'utf-8');
+    await loadDefaultFile();
+    configFileRaw = rawDefaultConfigFile;
     await writeFileAsync(configFilePath, configFileRaw, 'utf-8');
   } else
     configFileRaw = await readFileAsync(configFilePath, 'utf-8');
   try {
-    configFile = load(configFileRaw);
+    configFile = Object.assign({}, await loadDefaultFile(), load(configFileRaw));
   } catch {
     if(!configFile)
-      configFile = load(await readFileAsync(defaultConfigFilePath, 'utf-8'));
+      configFile = await loadDefaultFile();
     console.warn('Failed to load config file, will load default config instead');
   }
   isReloading = false;

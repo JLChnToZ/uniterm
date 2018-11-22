@@ -1,13 +1,15 @@
 import * as codeToSignal from 'code-to-signal';
 import { IpcMessageEvent, ipcRenderer, remote, shell } from 'electron';
 import * as h from 'hyperscript';
-import { extname } from 'path';
+import { extname, resolve as resolvePath } from 'path';
 import { IDisposable, ITerminalOptions, Terminal } from 'xterm';
 import { fit } from 'xterm/lib/addons/fit/fit';
 import { webLinksInit } from 'xterm/lib/addons/webLinks/webLinks';
 import { winptyCompatInit } from 'xterm/lib/addons/winptyCompat/winptyCompat';
 import { configFile, events, loadConfig, startWatch } from './config';
 import { TerminalLaunchOptions } from './interfaces';
+import { fileUrl } from './pathutils';
+import { getElectron } from './remote-wrapper';
 import { TerminalBase, TerminalOptions } from './terminals/base';
 import { PtyShell } from './terminals/pty';
 import { WslPtyShell } from './terminals/wslpty';
@@ -67,29 +69,37 @@ const tabs = new Set<Tab>();
 let activeTab: Tab | undefined;
 
 events.on('config', () => {
-  if(!configFile || !configFile.terminal) return;
-  const { terminal: options } = configFile;
-  if(tabs.size) {
-    const keys = Object.keys(options) as Array<keyof ITerminalOptions>;
-    for(const tab of tabs) {
-      if(!tab.terminal) continue;
-      const { terminal } = tab;
-      for(const key of keys) {
-        const value = options[key];
-        if(terminal.getOption(key) !== value)
-          terminal.setOption(key, value);
+  window.dispatchEvent(new CustomEvent('configreload', {}));
+  if(!configFile) return;
+  if(configFile.terminal) {
+    const { terminal: options } = configFile;
+    if(tabs.size) {
+      const keys = Object.keys(options) as Array<keyof ITerminalOptions>;
+      for(const tab of tabs) {
+        if(!tab.terminal) continue;
+        const { terminal } = tab;
+        for(const key of keys) {
+          const value = options[key];
+          if(terminal.getOption(key) !== value)
+            terminal.setOption(key, value);
+        }
+        fit(terminal);
       }
-      fit(terminal);
+    }
+    const { style } = document.body;
+    if(options.theme) {
+      const { theme } = options;
+      style.backgroundColor = theme.background || 'inherit';
+      style.color = theme.foreground || 'inherit';
+    } else {
+      style.backgroundColor = 'inherit';
+      style.color = 'inherit';
     }
   }
-  const { style } = document.body;
-  if(options.theme) {
-    const { theme } = options;
-    style.backgroundColor = theme.background || 'inherit';
-    style.color = theme.foreground || 'inherit';
-  } else {
-    style.backgroundColor = 'inherit';
-    style.color = 'inherit';
+  if(configFile.mods && configFile.mods.length) {
+    const userData = getElectron('app').getPath('userData');
+    for(const mod of configFile.mods)
+      loadScript(fileUrl(resolvePath(userData, mod)));
   }
 });
 
@@ -158,6 +168,7 @@ class Tab implements IDisposable {
     this.terminal.open(this.tabContent.appendChild(<div className="pty-container" />) as HTMLDivElement);
     this.onEnable();
     tabs.add(this);
+    window.dispatchEvent(new CustomEvent('newtab', { detail: this }));
   }
 
   public async attach(pty: TerminalBase<unknown>) {
@@ -180,6 +191,7 @@ class Tab implements IDisposable {
     } catch(err) {
       this.throwError(`Oops... error while launching "${this.pty.path}": ${err.message || err}`);
     }
+    window.dispatchEvent(new CustomEvent('tabattached', { detail: this }));
     this.onTitle(this.title);
   }
 
@@ -227,6 +239,7 @@ class Tab implements IDisposable {
   }
 
   public dispose() {
+    window.dispatchEvent(new CustomEvent('tabdispose', { detail: this }));
     tabs.delete(this);
     if(activeTab === this) {
       activeTab = [...tabs][0];
@@ -289,6 +302,13 @@ function getAsStringAsync(d: DataTransferItem) {
   return new Promise<string>(resolve => d.getAsString(resolve));
 }
 
+function loadScript(src: string) {
+  const script = <script async={true} src={src} />;
+  document.head.appendChild(script);
+  document.head.removeChild(script);
+  return script as HTMLScriptElement;
+}
+
 ipcRenderer.on('create-terminal', async (e: IpcMessageEvent, options: TerminalLaunchOptions) => {
   await loadConfig();
   const tab = new Tab(options.pause);
@@ -333,3 +353,15 @@ else
   ipcRenderer.send('ready');
 
 startWatch();
+
+// Expose everything for mods, except for requirable stuffs
+Object.assign(window, { tabs, Tab });
+Object.defineProperty(window, 'activeTab', {
+  get() { return activeTab; },
+  set(value: Tab) {
+    if(!(value instanceof Tab))
+      return;
+    activeTab = value;
+    activeTab.onEnable();
+  },
+});

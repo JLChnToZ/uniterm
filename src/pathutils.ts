@@ -19,7 +19,7 @@ function getPathsBuilder(extraPaths: string | string[]) {
 
 // Workaround for Windows executable extensions matching
 function getExtensionsBuilder(targetPath: string) {
-  if(process.platform !== 'win32' || extname(targetPath).length) {
+  if (process.platform !== 'win32' || extname(targetPath).length) {
     const p = [targetPath];
     return () => p;
   }
@@ -73,7 +73,7 @@ export function tryResolvePath(cwd: string, target?: string) {
 }
 
 export function fixPath(env: { [key: string]: string }) {
-  for(const key of Object.keys(process.env)) {
+  for (const key of Object.keys(process.env)) {
     if(!/^path$/i.test(key)) continue;
     if(env[key])
       env[key] += delimiter + dirname(process.argv0);
@@ -81,4 +81,11 @@ export function fixPath(env: { [key: string]: string }) {
       env[key] = process.env[key] + delimiter + dirname(process.argv0);
   }
   return env;
+}
+
+export function fileUrl(path: string) {
+  let pathName = resolvePath(path).replace(/\\/g, '/');
+  if(pathName[0] !== '/')
+    pathName = '/' + pathName;
+  return encodeURI('file://' + pathName);
 }
