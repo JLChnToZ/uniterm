@@ -4,8 +4,8 @@ import * as path from 'path';
 import * as yargs from 'yargs';
 import { configFilePath, loadConfig } from './config';
 import { register as registerContextMenu } from './default-context-menu';
+import { TerminalLaunchOptions } from './interfaces';
 import { tryResolvePath } from './pathutils';
-import { TerminalOptions } from './terminals/base';
 
 const windows: { [id: number]: BrowserWindow } = {};
 const readyWindowIds = new Set<number>();
@@ -16,7 +16,7 @@ const { name: packageName, version } =
   JSON.parse(readFileSync(path.resolve(__dirname, '../package.json'), 'utf-8'));
 
 const args = yargs
-  .usage('Usage: $0 [options] [shellargs..]')
+  .usage('Usage: $0 [options] [--] [shellargs..]')
   .options({
     'cwd': {
       string: true,
@@ -33,6 +33,11 @@ const args = yargs
       boolean: true,
       describe: 'Open the shell in a new window',
       alias: 'n',
+    },
+    'pause': {
+      boolean: true,
+      describe: 'Pauses after shell/program exits',
+      alias: 'p',
     },
     'config': {
       boolean: true,
@@ -132,11 +137,12 @@ async function openShell(lArgv: yargs.Arguments, cwd: string) {
   if(Array.isArray(lArgv.env) && lArgv.env.length)
     for(let i = 0; i < lArgv.env.length; i += 2)
       env[lArgv.env[i]] = lArgv.env[i + 1];
-  const options: TerminalOptions = {
+  const options: TerminalLaunchOptions = {
     path: lArgv._[0],
     argv: lArgv._.slice(1),
     cwd: tryResolvePath(cwd, lArgv.cwd),
     env,
+    pause: lArgv.pause,
   };
   (await getWindow(lArgv['new-window'])).send('create-terminal', options);
 }

@@ -1,3 +1,4 @@
+import * as codeToSignal from 'code-to-signal';
 import { IpcMessageEvent, ipcRenderer, remote, shell } from 'electron';
 import * as h from 'hyperscript';
 import { extname } from 'path';
@@ -6,6 +7,7 @@ import { fit } from 'xterm/lib/addons/fit/fit';
 import { webLinksInit } from 'xterm/lib/addons/webLinks/webLinks';
 import { winptyCompatInit } from 'xterm/lib/addons/winptyCompat/winptyCompat';
 import { configFile, events, loadConfig, startWatch } from './config';
+import { TerminalLaunchOptions } from './interfaces';
 import { TerminalBase, TerminalOptions } from './terminals/base';
 import { PtyShell } from './terminals/pty';
 import { WslPtyShell } from './terminals/wslpty';
@@ -100,9 +102,11 @@ class Tab implements IDisposable {
   public tabElement: HTMLElement;
   public tabContent: HTMLElement;
   public active: boolean;
+  public pause?: boolean;
 
-  constructor() {
+  constructor(pause?: boolean) {
     this.defaultTitle = 'Shell';
+    this.pause = pause;
     this.terminal = new Terminal(configFile && configFile.terminal || {
       fontFamily: 'powerlinesymbols, monospace',
       cursorBlink: true,
@@ -165,7 +169,10 @@ class Tab implements IDisposable {
       this.terminal.addDisposableListener('resize', ({ cols, rows }) => this.pty.resize(cols, rows)),
       this.terminal.addDisposableListener('title', this.onTitle.bind(this)),
       attachDisposable(pty, 'data', this.onDataOutput.bind(this)),
-      attachDisposable(pty, 'end', this.dispose.bind(this)),
+      attachDisposable(pty, 'end', this.pause ?
+        ((code?: number, signal?: number) =>
+          this.throwError(`\n\nProgram exits with ${code} ${codeToSignal(signal) || ''}`)) :
+        this.dispose.bind(this)),
     );
     this.pty.resize(this.terminal.cols, this.terminal.rows);
     try {
@@ -282,9 +289,9 @@ function getAsStringAsync(d: DataTransferItem) {
   return new Promise<string>(resolve => d.getAsString(resolve));
 }
 
-ipcRenderer.on('create-terminal', async (e: IpcMessageEvent, options: TerminalOptions) => {
+ipcRenderer.on('create-terminal', async (e: IpcMessageEvent, options: TerminalLaunchOptions) => {
   await loadConfig();
-  const tab = new Tab();
+  const tab = new Tab(options.pause);
   tab.attach(createBackend(options));
   if(tab.pty && (tab.pty instanceof WslPtyShell))
     tab.title = 'WSL Shell';

@@ -18,3 +18,11 @@ declare module 'default-shell' {
   const defaultShell: string;
   export = defaultShell;
 }
+
+declare module 'code-to-signal' {
+  function CodeToSignal(code: number): string;
+  namespace CodeToSignal {
+    export function shimError<TError extends Error>(error: TError): TError;
+  }
+  export = CodeToSignal;
+}
