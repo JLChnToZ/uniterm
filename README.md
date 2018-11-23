@@ -35,6 +35,11 @@ The features that exists in both Uniterm in Uniterm2:
   ```
 4. You will find your fresh build inside `dist/` folder.
 
+Or if you are lazy to do it/does not meet the requirements to build it, but
+you want to use/try it, you may go to [releases](https://github.com/JLChnToZ/uniterm/releases)
+and download the prebuilt binaries. (Currently Windows x64 is available only,
+sorry for other platforms)
+
 ## Modding
 
 It is quite tricky but not very hard to try it yourself. The mod files themselves
@@ -53,6 +58,9 @@ it wrotes and add the filename under the mods field.
 
 When you saved the config file, the terminal should immediately load/reloads
 all mod files.
+
+Here has an example working mod, which make all the tabs reorderable by dragging them:
+https://gist.github.com/JLChnToZ/f9e6ce2edf40820fe276a92c65b119bc
 
 ## License
 
