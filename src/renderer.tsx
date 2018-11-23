@@ -126,44 +126,20 @@ class Tab implements IDisposable {
     this.disposables = [];
     this.active = true;
     tabContainer.insertBefore(this.tabElement = <a className="item" onclick={e => {
-      e.preventDefault();
-      e.stopPropagation();
+      interceptEvent(e);
       this.onEnable();
     }}>
       {''}
       <a className="ts small negative close button" onclick={e => {
-        e.preventDefault();
-        e.stopPropagation();
+        interceptEvent(e);
         this.dispose();
       }} />
     </a> as HTMLElement, addButton);
-    this.tabContent = <div ondrop={async e => {
-      e.preventDefault();
-      e.stopPropagation();
-      const result: string[] = [];
-      const stringData: DataTransferItem[] = [];
-      const { items } = e.dataTransfer;
-      if(items) {
-        // tslint:disable-next-line:prefer-for-of
-        for(let i = 0; i < items.length; i++) {
-          const item = items[i];
-          switch(item.kind) {
-            case 'file': result.push(item.getAsFile().path); break;
-            case 'string': if(item.type === 'text/plain') stringData.push(item); break;
-          }
-        }
-        if(stringData.length)
-          this.pty.write((await Promise.all(stringData.map(getAsStringAsync))).join(''));
-        items.clear();
-      } else {
-        const { files } = e.dataTransfer;
-        // tslint:disable-next-line:prefer-for-of
-        for(let i = 0; i < files.length; i++)
-          result.push(files[i].path);
-        e.dataTransfer.clearData();
-      }
-      this.pty.dropFiles(result);
-    }} /> as HTMLElement;
+    this.tabContent = <div
+      ondragenter={this.handleDragEnter.bind(this)}
+      ondragover={interceptEvent}
+      ondrop={this.handleDrop.bind(this)}
+    /> as HTMLElement;
     rootContainer.appendChild(this.tabContent);
     this.terminal.open(this.tabContent.appendChild(<div className="pty-container" />) as HTMLDivElement);
     this.onEnable();
@@ -176,27 +152,27 @@ class Tab implements IDisposable {
     if(pty.path) this.defaultTitle = extname(pty.path);
     this.pty = pty;
     this.disposables.push(
-      this.terminal.addDisposableListener('data', this.onDataInput.bind(this)),
+      this.terminal.addDisposableListener('data', this.handleDataInput.bind(this)),
       this.terminal.addDisposableListener('resize', ({ cols, rows }) => this.pty.resize(cols, rows)),
-      this.terminal.addDisposableListener('title', this.onTitle.bind(this)),
-      attachDisposable(pty, 'data', this.onDataOutput.bind(this)),
+      this.terminal.addDisposableListener('title', this.handleTitleChange.bind(this)),
+      attachDisposable(pty, 'data', this.handleDataOutput.bind(this)),
       attachDisposable(pty, 'end', this.pause ?
         ((code?: number, signal?: number) =>
-          this.throwError(`\n\nProgram exits with ${code} ${codeToSignal(signal) || ''}`)) :
+          this.printDisposableMessage(`\n\nProgram exits with ${code} ${codeToSignal(signal) || ''}`)) :
         this.dispose.bind(this)),
     );
     this.pty.resize(this.terminal.cols, this.terminal.rows);
     try {
       await this.pty.spawn();
     } catch(err) {
-      this.throwError(`Oops... error while launching "${this.pty.path}": ${err.message || err}`);
+      this.printDisposableMessage(`Oops... error while launching "${this.pty.path}": ${err.message || err}`);
     }
     window.dispatchEvent(new CustomEvent('tabattached', { detail: this }));
-    this.onTitle(this.title);
+    this.handleTitleChange(this.title);
   }
 
-  public throwError(message: string) {
-    if(!this.terminal) {
+  public printDisposableMessage(message: string, isError: boolean = true) {
+    if(!this.terminal && isError) {
       remote.dialog.showErrorBox('Error', message);
       return;
     }
@@ -215,27 +191,7 @@ class Tab implements IDisposable {
     setTitle(this.title);
     for(const tab of tabs)
       if(tab && tab !== this)
-        tab.onDisable();
-  }
-
-  public onDisable() {
-    if(this.tabElement) this.tabElement.className = 'item';
-    if(this.tabContent) this.tabContent.className = 'ts bottom attached inverted tab segment';
-    this.active = false;
-  }
-
-  public onDataInput(text: string) {
-    if(this.pty) this.pty.write(text, 'utf8');
-  }
-
-  public onDataOutput(data: string | Buffer) {
-    if(this.terminal) this.terminal.write(Buffer.isBuffer(data) ? data.toString('utf8') : data);
-  }
-
-  public onTitle(title: string) {
-    this.title = title && title.trim() || this.pty && this.pty.process && this.pty.process.trim() || this.defaultTitle;
-    if(this.tabElement) this.tabElement.firstChild.textContent = this.title;
-    if(this.active) setTitle(this.title);
+        tab.handleDisable();
   }
 
   public dispose() {
@@ -264,6 +220,81 @@ class Tab implements IDisposable {
       delete this.tabElement;
     }
     if(!tabs.size) window.close();
+  }
+
+  private handleDisable() {
+    if(this.tabElement) this.tabElement.className = 'item';
+    if(this.tabContent) this.tabContent.className = 'ts bottom attached inverted tab segment';
+    this.active = false;
+  }
+
+  private handleTitleChange(title: string) {
+    this.title = title && title.trim() || this.pty && this.pty.process && this.pty.process.trim() || this.defaultTitle;
+    if(this.tabElement) this.tabElement.firstChild.textContent = this.title;
+    if(this.active) setTitle(this.title);
+  }
+
+  private handleDataInput(text: string) {
+    if(this.pty) this.pty.write(text, 'utf8');
+  }
+
+  private handleDataOutput(data: string | Buffer) {
+    if(this.terminal) this.terminal.write(Buffer.isBuffer(data) ? data.toString('utf8') : data);
+  }
+
+  private handleDragEnter(e: DragEvent) {
+    interceptEvent(e);
+    const { dataTransfer } = e;
+    const { items, files } = dataTransfer;
+    let handle = false;
+    if(items && items.length)
+      // tslint:disable-next-line:prefer-for-of
+      hasHandle: for(let i = 0; i < items.length; i++) {
+        const item = items[i];
+        switch(item.kind) {
+          case 'file': handle = true; break hasHandle;
+          case 'string':
+            if(item.type === 'text/plain') {
+              handle = true;
+              break hasHandle;
+            }
+            break;
+        }
+      }
+    else if(files)
+      handle = !!files.length;
+    e.dataTransfer.dropEffect = handle ? 'copy' : 'none';
+  }
+
+  private async handleDrop(e: DragEvent) {
+    interceptEvent(e);
+    const result: string[] = [];
+    const stringData: DataTransferItem[] = [];
+    const { items, files } = e.dataTransfer;
+    if(items && items.length) {
+      // tslint:disable-next-line:prefer-for-of
+      for(let i = 0; i < items.length; i++) {
+        const item = items[i];
+        switch(item.kind) {
+          case 'file':
+            result.push(item.getAsFile().path);
+            break;
+          case 'string':
+            if(item.type === 'text/plain')
+              stringData.push(item);
+            break;
+        }
+      }
+      if(stringData.length)
+        this.pty.write((await Promise.all(stringData.map(getAsStringAsync))).join(''));
+      items.clear();
+    } else if(files && files.length) {
+      // tslint:disable-next-line:prefer-for-of
+      for(let i = 0; i < files.length; i++)
+        result.push(files[i].path);
+      e.dataTransfer.clearData();
+    }
+    this.pty.dropFiles(result);
   }
 }
 
@@ -309,6 +340,11 @@ function loadScript(src: string) {
   return script as HTMLScriptElement;
 }
 
+function interceptEvent(e: Event) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
 ipcRenderer.on('create-terminal', async (e: IpcMessageEvent, options: TerminalLaunchOptions) => {
   await loadConfig();
   const tab = new Tab(options.pause);
@@ -342,7 +378,10 @@ window.addEventListener('resize', () => {
     fit(activeTab.terminal);
 });
 
-document.body.addEventListener('dragover', e => e.preventDefault());
+document.body.addEventListener('dragenter', e => {
+  interceptEvent(e);
+  e.dataTransfer.dropEffect = 'none';
+});
 
 if(document.readyState !== 'complete')
   document.addEventListener('readystatechange', () => {
