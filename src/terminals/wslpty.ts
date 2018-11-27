@@ -4,7 +4,7 @@ import { resolveWslPath } from '../pathutils';
 import { TerminalBase, TerminalOptions } from './base';
 
 export class WslPtyShell extends TerminalBase<IPty> {
-  get process() { return this.pty ? this.pty.process : undefined; }
+  get process() { return this.pty ? (this.pty.process || 'WSL Shell') : undefined; }
 
   constructor(options?: TerminalOptions) {
     super(options);

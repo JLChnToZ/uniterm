@@ -25,7 +25,7 @@ function getExtensionsBuilder(targetPath: string) {
   }
   let pathext: string[] | undefined;
   return function*() {
-    for(const ext of pathext || (pathext = process.env.PATHEXT.split(delimiter)))
+    for(const ext of pathext || (pathext = process.env.PATHEXT.toLowerCase().split(delimiter)))
       yield targetPath + ext;
     yield targetPath;
   };

@@ -1,5 +1,6 @@
 import * as defaultShell from 'default-shell';
 import { IPty, spawn } from 'node-pty';
+import { basename } from 'path';
 import * as escape from 'shell-escape';
 import { resolveExecutable } from '../pathutils';
 import { TerminalBase, TerminalOptions } from './base';
@@ -14,10 +15,12 @@ export class PtyShell extends TerminalBase<IPty> {
 
   public async spawn() {
     if(this.pty) return;
-    this.pty = spawn(this.path ?
+    const file = this.path ?
       await resolveExecutable(this.path) :
-      defaultShell,
+      defaultShell;
+    this.pty = spawn(file,
       this.argv || [], {
+      name: basename(file),
       env: this.env,
       cwd: this.cwd,
       cols: this.cols,

@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, IpcMessageEvent, shell, WebContents } from 'electron';
 import { readFileSync } from 'fs';
-import * as path from 'path';
+import { dirname, relative as relativePath, resolve as resolvePath } from 'path';
 import * as yargs from 'yargs';
 import { configFilePath, loadConfig } from './config';
 import { register as registerContextMenu } from './default-context-menu';
@@ -13,7 +13,7 @@ let activeReadyWindowId: number | undefined;
 const openingWindows: { [id: number]: Array<(value: WebContents) => void> } = {};
 
 const { name: packageName, version } =
-  JSON.parse(readFileSync(path.resolve(__dirname, '../package.json'), 'utf-8'));
+  JSON.parse(readFileSync(resolvePath(__dirname, '../package.json'), 'utf-8'));
 
 const args = yargs
   .usage('Usage: $0 [options] [--] [shellargs..]')
@@ -98,12 +98,12 @@ function createWindow() {
   const window = new BrowserWindow({
     height: 600,
     width: 800,
-    icon: path.resolve(__dirname, `../icons/uniterm.${process.platform === 'win32' ? 'ico' : 'png'}`),
+    icon: resolvePath(__dirname, `../icons/uniterm.${process.platform === 'win32' ? 'ico' : 'png'}`),
     frame: false,
     titleBarStyle: 'hiddenInset',
   });
   const { id } = window;
-  window.loadFile(path.join(__dirname, '../static/index.html'));
+  window.loadFile(resolvePath(__dirname, '../static/index.html'));
   window.setMenu(null);
   registerContextMenu(window);
   windows[id] = window;
@@ -133,14 +133,22 @@ function getWindow(newWindow?: boolean) {
 }
 
 async function openShell(lArgv: yargs.Arguments, cwd: string) {
+  // Join env values
   const env: { [key: string]: string } = {};
   if(Array.isArray(lArgv.env) && lArgv.env.length)
     for(let i = 0; i < lArgv.env.length; i += 2)
       env[lArgv.env[i]] = lArgv.env[i + 1];
+  // Resolve working directory, resolve to users's home if not set and launched directly at the executable path.
+  try {
+    if(lArgv.cwd)
+      cwd = tryResolvePath(cwd, lArgv.cwd);
+    else if(!relativePath(cwd, dirname(app.getPath('exe'))))
+      cwd = process.platform === 'win32' && lArgv._[0] === 'wsl' ? '~' : app.getPath('home');
+  } catch {}
   const options: TerminalLaunchOptions = {
     path: lArgv._[0],
     argv: lArgv._.slice(1),
-    cwd: tryResolvePath(cwd, lArgv.cwd),
+    cwd,
     env,
     pause: lArgv.pause,
   };

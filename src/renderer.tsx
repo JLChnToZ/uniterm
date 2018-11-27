@@ -1,5 +1,5 @@
 import * as codeToSignal from 'code-to-signal';
-import { IpcMessageEvent, ipcRenderer, remote, shell } from 'electron';
+import { clipboard, IpcMessageEvent, ipcRenderer, remote, shell } from 'electron';
 import * as h from 'hyperscript';
 import { extname, resolve as resolvePath } from 'path';
 import { IDisposable, ITerminalOptions, Terminal } from 'xterm';
@@ -111,8 +111,10 @@ class Tab implements IDisposable {
   public defaultTitle: string;
   public tabElement: HTMLElement;
   public tabContent: HTMLElement;
+  public tabContentText: Text;
   public active: boolean;
   public pause?: boolean;
+  private explicitTitle?: boolean;
 
   constructor(pause?: boolean) {
     this.defaultTitle = 'Shell';
@@ -129,16 +131,17 @@ class Tab implements IDisposable {
       interceptEvent(e);
       this.onEnable();
     }}>
-      {''}
+      {this.tabContentText = document.createTextNode('')}
       <a className="ts small negative close button" onclick={e => {
         interceptEvent(e);
         this.dispose();
       }} />
     </a> as HTMLElement, addButton);
     this.tabContent = <div
-      ondragenter={this.handleDragEnter.bind(this)}
-      ondragover={interceptEvent}
+      ondragenter={this.handleDragOver.bind(this)}
+      ondragover={this.handleDragOver.bind(this)}
       ondrop={this.handleDrop.bind(this)}
+      oncontextmenu={this.handleContextMenu.bind(this)}
     /> as HTMLElement;
     rootContainer.appendChild(this.tabContent);
     this.terminal.open(this.tabContent.appendChild(<div className="pty-container" />) as HTMLDivElement);
@@ -154,7 +157,10 @@ class Tab implements IDisposable {
     this.disposables.push(
       this.terminal.addDisposableListener('data', this.handleDataInput.bind(this)),
       this.terminal.addDisposableListener('resize', ({ cols, rows }) => this.pty.resize(cols, rows)),
-      this.terminal.addDisposableListener('title', this.handleTitleChange.bind(this)),
+      this.terminal.addDisposableListener('title', title => {
+        this.explicitTitle = !!title;
+        this.handleTitleChange(title);
+      }),
       attachDisposable(pty, 'data', this.handleDataOutput.bind(this)),
       attachDisposable(pty, 'end', this.pause ?
         ((code?: number, signal?: number) =>
@@ -228,49 +234,47 @@ class Tab implements IDisposable {
     this.active = false;
   }
 
-  private handleTitleChange(title: string) {
-    this.title = title && title.trim() || this.pty && this.pty.process && this.pty.process.trim() || this.defaultTitle;
-    if(this.tabElement) this.tabElement.firstChild.textContent = this.title;
+  private handleTitleChange(title?: string) {
+    this.title = title && title.trim() || this.processTitle || this.defaultTitle;
+    if(this.tabContentText) this.tabContentText.textContent = this.title;
     if(this.active) setTitle(this.title);
+  }
+
+  private get processTitle() {
+    const proc = this.pty && this.pty.process;
+    return proc && proc.trim() || '';
   }
 
   private handleDataInput(text: string) {
     if(this.pty) this.pty.write(text, 'utf8');
+    if(!this.explicitTitle) this.handleTitleChange();
   }
 
   private handleDataOutput(data: string | Buffer) {
     if(this.terminal) this.terminal.write(Buffer.isBuffer(data) ? data.toString('utf8') : data);
   }
 
-  private handleDragEnter(e: DragEvent) {
+  private handleDragOver(e: DragEvent) {
     interceptEvent(e);
     const { dataTransfer } = e;
-    const { items, files } = dataTransfer;
-    let handle = false;
-    if(items && items.length)
-      // tslint:disable-next-line:prefer-for-of
-      hasHandle: for(let i = 0; i < items.length; i++) {
-        const item = items[i];
-        switch(item.kind) {
-          case 'file': handle = true; break hasHandle;
-          case 'string':
-            if(item.type === 'text/plain') {
-              handle = true;
-              break hasHandle;
-            }
-            break;
-        }
+    for(const type of dataTransfer.types)
+      switch(type) {
+        case 'text':
+        case 'text/plain':
+          dataTransfer.dropEffect = 'copy';
+          return;
+        case 'Files':
+          dataTransfer.dropEffect = 'link';
+          return;
       }
-    else if(files)
-      handle = !!files.length;
-    e.dataTransfer.dropEffect = handle ? 'copy' : 'none';
+    dataTransfer.dropEffect = 'none';
   }
 
   private async handleDrop(e: DragEvent) {
     interceptEvent(e);
     const result: string[] = [];
     const stringData: DataTransferItem[] = [];
-    const { items, files } = e.dataTransfer;
+    const { items } = e.dataTransfer;
     if(items && items.length) {
       // tslint:disable-next-line:prefer-for-of
       for(let i = 0; i < items.length; i++) {
@@ -288,13 +292,17 @@ class Tab implements IDisposable {
       if(stringData.length)
         this.pty.write((await Promise.all(stringData.map(getAsStringAsync))).join(''));
       items.clear();
-    } else if(files && files.length) {
-      // tslint:disable-next-line:prefer-for-of
-      for(let i = 0; i < files.length; i++)
-        result.push(files[i].path);
-      e.dataTransfer.clearData();
     }
+    e.dataTransfer.clearData();
     this.pty.dropFiles(result);
+  }
+
+  private handleContextMenu(e: MouseEvent) {
+    interceptEvent(e);
+    if(!this.terminal || !this.terminal.hasSelection())
+      return;
+    clipboard.writeText(this.terminal.getSelection());
+    this.terminal.clearSelection();
   }
 }
 
@@ -345,30 +353,25 @@ function interceptEvent(e: Event) {
   e.stopPropagation();
 }
 
+function interceptDrop(e: DragEvent) {
+  interceptEvent(e);
+  e.dataTransfer.dropEffect = 'none';
+}
+
 ipcRenderer.on('create-terminal', async (e: IpcMessageEvent, options: TerminalLaunchOptions) => {
   await loadConfig();
   const tab = new Tab(options.pause);
   tab.attach(createBackend(options));
-  if(tab.pty && (tab.pty instanceof WslPtyShell))
-    tab.title = 'WSL Shell';
   remote.getCurrentWindow().focus();
 });
 
 window.addEventListener('beforeunload', e => {
-  if(tabs.size > 1) {
-    e.returnValue = false;
-    remote.dialog.showMessageBox(remote.getCurrentWindow(), {
-      type: 'question',
-      title: 'Exit?',
-      message: `There are still ${tabs.size} sessions are opened, do you really want to close?`,
-      buttons: ['Yes', 'No'],
-    }, response => {
-      if(response === 0) {
-        destroyAllTabs();
-        window.close();
-      }
-    });
-  }
+  if(tabs.size > 1 && remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+    type: 'question',
+    title: 'Exit?',
+    message: `There are still ${tabs.size} sessions are opened, do you really want to close?`,
+    buttons: ['Yes', 'No'],
+  })) e.returnValue = false;
 });
 
 window.addEventListener('close', destroyAllTabs);
@@ -378,10 +381,8 @@ window.addEventListener('resize', () => {
     fit(activeTab.terminal);
 });
 
-document.body.addEventListener('dragenter', e => {
-  interceptEvent(e);
-  e.dataTransfer.dropEffect = 'none';
-});
+document.body.addEventListener('dragenter', interceptDrop);
+document.body.addEventListener('dragover', interceptDrop);
 
 if(document.readyState !== 'complete')
   document.addEventListener('readystatechange', () => {
