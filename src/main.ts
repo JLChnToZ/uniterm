@@ -70,7 +70,9 @@ else if(!app.requestSingleInstanceLock())
   app.quit();
 else {
   loadConfig();
-  app.on('ready', () => openShell(argv, process.cwd()));
+  const workingDir = process.cwd();
+  process.chdir(dirname(app.getPath('exe')));
+  app.on('ready', () => openShell(argv, workingDir));
   app.on('window-all-closed', () => {
     if(process.platform !== 'darwin')
       app.quit();

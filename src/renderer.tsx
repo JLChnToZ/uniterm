@@ -9,7 +9,7 @@ import { winptyCompatInit } from 'xterm/lib/addons/winptyCompat/winptyCompat';
 import { configFile, events, loadConfig, startWatch } from './config';
 import { TerminalLaunchOptions } from './interfaces';
 import { fileUrl } from './pathutils';
-import { getElectron } from './remote-wrapper';
+import { electron } from './remote-wrapper';
 import { TerminalBase, TerminalOptions } from './terminals/base';
 import { PtyShell } from './terminals/pty';
 import { WslPtyShell } from './terminals/wslpty';
@@ -25,7 +25,9 @@ rootContainer = document.body.appendChild(<div className="pty-tabs">
     {tabContainer = <div className="flex">{
       addButton = <a className="item" onclick={async () => {
         await loadConfig();
-        new Tab().attach(createBackend({}));
+        new Tab().attach(createBackend({
+          cwd: electron.app.getPath('home'),
+        }));
       }}>
         <i className="ts plus icon" />
       </a> as HTMLElement
@@ -97,7 +99,7 @@ events.on('config', () => {
     }
   }
   if(configFile.mods && configFile.mods.length) {
-    const userData = getElectron('app').getPath('userData');
+    const userData = electron.app.getPath('userData');
     for(const mod of configFile.mods)
       loadScript(fileUrl(resolvePath(userData, mod)));
   }
@@ -299,10 +301,13 @@ class Tab implements IDisposable {
 
   private handleContextMenu(e: MouseEvent) {
     interceptEvent(e);
-    if(!this.terminal || !this.terminal.hasSelection())
-      return;
-    clipboard.writeText(this.terminal.getSelection());
-    this.terminal.clearSelection();
+    if(this.terminal && this.terminal.hasSelection()) {
+      clipboard.writeText(this.terminal.getSelection());
+      this.terminal.clearSelection();
+    } else if(this.pty) {
+      const text = clipboard.readText();
+      if(text) this.pty.write(text);
+    }
   }
 }
 

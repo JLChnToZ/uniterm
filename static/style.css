@@ -22,6 +22,11 @@ body {
   overflow: hidden;
 }
 
+/* Tweak the terminal selection. */
+.xterm-selection-layer {
+  mix-blend-mode: exclusion;
+}
+
 .pty-tabs>.tabbed.menu .drag {
   -webkit-app-region: drag;
   display: flex;

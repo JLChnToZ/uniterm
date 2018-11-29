@@ -5,7 +5,7 @@ import { resolve } from 'path';
 import { setTimeout } from 'timers';
 import { promisify } from 'util';
 import { ITerminalOptions } from 'xterm';
-import { getElectron } from './remote-wrapper';
+import { electron } from './remote-wrapper';
 
 const readFileAsync = promisify(readFile);
 const writeFileAsync = promisify(writeFile);
@@ -19,7 +19,7 @@ export interface ConfigFile {
 
 export const events = new EventEmitter();
 export let configFile: ConfigFile | undefined;
-const userData = getElectron('app').getPath('userData');
+const userData = electron.app.getPath('userData');
 export const configFilePath = resolve(userData, 'uniterm.yml');
 let rawDefaultConfigFile: string | undefined;
 let defaultConfigFile: ConfigFile | undefined;

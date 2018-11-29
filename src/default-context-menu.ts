@@ -5,7 +5,7 @@ import {
   MenuItemConstructorOptions,
   WebContents,
 } from 'electron';
-import { getElectron } from './remote-wrapper';
+import { electron } from './remote-wrapper';
 
 interface CustomMenuExtention {
   category?: string;
@@ -31,7 +31,7 @@ const contextMenuTemplate: CustomMenuOption[] = [
 ];
 
 export function register(window: BrowserWindow, webContents?: WebContents) {
-  const contextMenu = getElectron('Menu').buildFromTemplate(contextMenuTemplate);
+  const contextMenu = electron.Menu.buildFromTemplate(contextMenuTemplate);
   (webContents || window.webContents).on('context-menu', (e, params) => {
     e.preventDefault();
     let hasEnabledItems = false;
