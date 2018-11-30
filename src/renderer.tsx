@@ -143,7 +143,6 @@ class Tab implements IDisposable {
       ondragenter={this.handleDragOver.bind(this)}
       ondragover={this.handleDragOver.bind(this)}
       ondrop={this.handleDrop.bind(this)}
-      oncontextmenu={this.handleContextMenu.bind(this)}
     /> as HTMLElement;
     rootContainer.appendChild(this.tabContent);
     this.terminal.open(this.tabContent.appendChild(<div className="pty-container" />) as HTMLDivElement);
@@ -297,17 +296,6 @@ class Tab implements IDisposable {
     }
     e.dataTransfer.clearData();
     this.pty.dropFiles(result);
-  }
-
-  private handleContextMenu(e: MouseEvent) {
-    interceptEvent(e);
-    if(this.terminal && this.terminal.hasSelection()) {
-      clipboard.writeText(this.terminal.getSelection());
-      this.terminal.clearSelection();
-    } else if(this.pty) {
-      const text = clipboard.readText();
-      if(text) this.pty.write(text);
-    }
   }
 }
 

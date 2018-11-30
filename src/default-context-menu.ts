@@ -1,5 +1,6 @@
 import {
   BrowserWindow,
+  ContextMenuParams,
   EditFlags,
   MenuItem,
   MenuItemConstructorOptions,
@@ -7,44 +8,55 @@ import {
 } from 'electron';
 import { electron } from './remote-wrapper';
 
-interface CustomMenuExtention {
-  category?: string;
+export interface CustomMenuExtention {
   editFlag?: keyof EditFlags;
+  hideIfReadOnly?: boolean;
 }
 
-interface CustomMenuOption extends MenuItemConstructorOptions, CustomMenuExtention {}
+export interface CustomMenuOption extends MenuItemConstructorOptions, CustomMenuExtention {}
 
-interface CustomMenuItem extends MenuItem, CustomMenuExtention {}
+export interface CustomMenuItem extends MenuItem, CustomMenuExtention {}
 
-const contextMenuTemplate: CustomMenuOption[] = [
-  { role: 'undo', editFlag: 'canUndo', category: 'edit' },
-  { role: 'redo', editFlag: 'canRedo', category: 'edit' },
-  { type: 'separator', category: 'edit' },
-  { role: 'cut', editFlag: 'canCut', category: 'edit' },
-  { role: 'copy', editFlag: 'canCopy' },
-  { role: 'paste', editFlag: 'canPaste', category: 'edit' },
-  { role: 'delete', editFlag: 'canDelete', category: 'edit' },
+export const defaultContextMenuTemplate: CustomMenuOption[] = [
+  { role: 'undo', editFlag: 'canUndo', accelerator: 'CmdOrCtrl+Z', hideIfReadOnly: true },
+  { role: 'redo', editFlag: 'canRedo', accelerator: 'CmdOrCtrl+Y', hideIfReadOnly: true },
+  { type: 'separator', hideIfReadOnly: true },
+  { role: 'cut', editFlag: 'canCut', accelerator: 'CmdOrCtrl+X', hideIfReadOnly: true },
+  { role: 'copy', editFlag: 'canCopy', accelerator: 'CmdOrCtrl+Insert' },
+  { role: 'paste', editFlag: 'canPaste', accelerator: 'Shift+Insert', hideIfReadOnly: true },
+  { role: 'delete', editFlag: 'canDelete', hideIfReadOnly: true },
   { type: 'separator' },
-  { role: 'selectall', editFlag: 'canSelectAll' },
+  { role: 'selectall', editFlag: 'canSelectAll', accelerator: 'CmdOrCtrl+A' },
   { type: 'separator' },
-  { role: 'toggleDevTools' },
+  { role: 'toggleDevTools', accelerator: 'CmdOrCtrl+Shift+I' },
 ];
 
-export function register(window: BrowserWindow, webContents?: WebContents) {
-  const contextMenu = electron.Menu.buildFromTemplate(contextMenuTemplate);
-  (webContents || window.webContents).on('context-menu', (e, params) => {
-    e.preventDefault();
-    let hasEnabledItems = false;
-    for(const item of contextMenu.items as CustomMenuItem[]) {
-      switch(item.category) {
-        case 'edit': item.visible = params.isEditable; break;
-      }
+export function showContextMenu(window: BrowserWindow, contextMenu: Electron.Menu, params?: ContextMenuParams) {
+  let hasEnabledItems = false;
+  for(const item of contextMenu.items as CustomMenuItem[]) {
+    if(params) {
+      if(item.hideIfReadOnly)
+        item.visible = params.isEditable;
       if(item.editFlag)
         item.enabled = params.editFlags[item.editFlag];
-      if(item.enabled && (item as any).type !== 'separator')
-        hasEnabledItems = true;
     }
-    if(hasEnabledItems)
-      contextMenu.popup({ window });
+    if(item.enabled && (item as any).type !== 'separator')
+      hasEnabledItems = true;
+  }
+  if(hasEnabledItems)
+    contextMenu.popup({ window });
+}
+
+export function register(window: BrowserWindow, webContents?: WebContents) {
+  const contextMenu = electron.Menu.buildFromTemplate(defaultContextMenuTemplate);
+  if(!webContents) webContents = window.webContents;
+  webContents.on('context-menu', (e, params) => {
+    e.preventDefault();
+    showContextMenu(window, contextMenu, params);
+  }).on('before-input-event', (e, input) => {
+    if(input.control && input.shift && input.code === 'KeyI') {
+      e.preventDefault();
+      webContents.toggleDevTools();
+    }
   });
 }
