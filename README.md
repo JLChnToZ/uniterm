@@ -40,6 +40,35 @@ you want to use/try it, you may go to [releases](https://github.com/JLChnToZ/uni
 and download the prebuilt binaries. (Currently Windows x64 is available only,
 sorry for other platforms)
 
+## Using
+
+Mainly, when you double-clicked the entry file (`uniterm.exe` for Windows, `uniterm.app` for OSX and `uniterm` for Linux),
+it launches the default shell of your system (cmd, bash, etc.), but if you want more control on how it launches
+(for example you want to launch a different shell, start from a specified directory, pass more environment variables, etc.),
+you can pass arguments to it (via any external shell or even the shell opened inside Uniterm).
+
+Here is the command-line usage, that is, what you will get when you pass `--help`:
+```text
+Usage: uniterm.exe --help [options] [--] [shellargs..]
+
+Options:
+  --cwd, -c         Working directory to start shell.                   [string]
+  --env, -e         Add/modify environment variable passed into the shell.
+                                                                         [array]
+  --new-window, -n  Open the shell in a new window                     [boolean]
+  --pause, -p       Pauses after shell/program exits                   [boolean]
+  --config          Opens the config file                              [boolean]
+  --reset-config    Resets the config file                             [boolean]
+  --version         Show version number                                [boolean]
+  --help            Show help                                          [boolean]
+```
+
+Additionally, you can have full WSL integration if you launch WSL with Uniterm by pass `wsl` as the shell exactly
+such as `uniterm [options] [--] wsl [args..]` (Of cause this is a Windows only feature, this won't works on other platforms).
+Your system's firewall may complain if you first time to launch the WSL with Uniterm,
+as Uniterm needs to seek a free TCP port and open it to localhost for communicate between Windows side and Linux side.
+When it asks for such permission, just allow it or it will not work.
+
 ## Modding
 
 It is quite tricky but not very hard to try it yourself. The mod files themselves
