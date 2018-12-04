@@ -1,14 +1,14 @@
 import * as codeToSignal from 'code-to-signal';
-import { clipboard, IpcMessageEvent, ipcRenderer, remote, shell } from 'electron';
+import { IpcMessageEvent, ipcRenderer, remote, shell } from 'electron';
 import * as h from 'hyperscript';
-import { extname, resolve as resolvePath } from 'path';
+import { extname } from 'path';
+import { resolve as resolvePath } from 'url';
 import { IDisposable, ITerminalOptions, Terminal } from 'xterm';
 import { fit } from 'xterm/lib/addons/fit/fit';
 import { webLinksInit } from 'xterm/lib/addons/webLinks/webLinks';
 import { winptyCompatInit } from 'xterm/lib/addons/winptyCompat/winptyCompat';
 import { configFile, events, loadConfig, startWatch } from './config';
 import { TerminalLaunchOptions } from './interfaces';
-import { fileUrl } from './pathutils';
 import { electron } from './remote-wrapper';
 import { TerminalBase, TerminalOptions } from './terminals/base';
 import { PtyShell } from './terminals/pty';
@@ -98,11 +98,9 @@ events.on('config', () => {
       style.color = 'inherit';
     }
   }
-  if(configFile.mods && configFile.mods.length) {
-    const userData = electron.app.getPath('userData');
+  if(configFile.mods && configFile.mods.length)
     for(const mod of configFile.mods)
-      loadScript(fileUrl(resolvePath(userData, mod)));
-  }
+      loadScript(resolvePath('userdata/', mod));
 });
 
 class Tab implements IDisposable {
@@ -388,7 +386,7 @@ else
 startWatch();
 
 // Expose everything for mods, except for requirable stuffs
-Object.assign(window, { tabs, Tab });
+Object.assign(window, { tabs, Tab, electron });
 Object.defineProperty(window, 'activeTab', {
   get() { return activeTab; },
   set(value: Tab) {

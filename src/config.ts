@@ -19,8 +19,7 @@ export interface ConfigFile {
 
 export const events = new EventEmitter();
 export let configFile: ConfigFile | undefined;
-const userData = electron.app.getPath('userData');
-export const configFilePath = resolve(userData, 'uniterm.yml');
+export let configFilePath = '';
 let rawDefaultConfigFile: string | undefined;
 let defaultConfigFile: ConfigFile | undefined;
 
@@ -28,6 +27,11 @@ let resolved = true;
 let resolveTime = Date.now();
 let isReloading = false;
 let reloadingPromise: Promise<ConfigFile> | undefined;
+
+export function reloadConfigPath(reload: boolean = true) {
+  if(configFilePath && !reload) return;
+  configFilePath = resolve(electron.app.getPath('userData'), 'uniterm.yml');
+}
 
 export function loadConfig(forceReload: boolean = false, reset: boolean = false) {
   if(isReloading)
@@ -41,13 +45,14 @@ async function loadDefaultFile() {
   if(!rawDefaultConfigFile) {
     rawDefaultConfigFile =
       await readFileAsync(resolve(__dirname, '../static/config.default.yml'), 'utf-8');
-    rawDefaultConfigFile = rawDefaultConfigFile.replace(/\$relative_path/g, userData);
+    rawDefaultConfigFile = rawDefaultConfigFile.replace(/\$relative_path/g, electron.app.getPath('userData'));
     defaultConfigFile = load(rawDefaultConfigFile);
   }
   return defaultConfigFile;
 }
 
 async function reloadFile(reset: boolean) {
+  reloadConfigPath();
   isReloading = true;
   let configFileRaw: string;
   if(reset || !await existsAsync(configFilePath)) {
@@ -71,6 +76,7 @@ async function reloadFile(reset: boolean) {
 let watcher: FSWatcher | undefined;
 
 export function startWatch() {
+  reloadConfigPath();
   if(watcher) return watcher;
   return watcher = watch(configFilePath, async () => {
     resolveTime = Date.now();

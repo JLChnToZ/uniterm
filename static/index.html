@@ -7,6 +7,6 @@
     <title>Uniterm2</title>
   </head>
   <body>
-    <script>require('../lib/renderer.js')</script>
+    <script>require(`${require('electron').remote.app.getAppPath()}/lib/renderer.js`)</script>
   </body>
 </html>

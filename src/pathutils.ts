@@ -1,10 +1,11 @@
 import { spawn } from 'child_process';
-import { exists, stat } from 'fs';
-import { delimiter, dirname, extname, resolve as resolvePath } from 'path';
+import { exists, mkdir, stat } from 'fs';
+import { delimiter, dirname, extname, resolve as resolvePath, sep } from 'path';
 import { promisify } from 'util';
 
 const existsAsync = promisify(exists);
 const statAsync = promisify(stat);
+const mkdirAsync = promisify(mkdir);
 
 function getPathsBuilder(extraPaths: string | string[]) {
   let cwd: string | undefined;
@@ -88,4 +89,15 @@ export function fileUrl(path: string) {
   if(pathName[0] !== '/')
     pathName = '/' + pathName;
   return encodeURI('file://' + pathName);
+}
+
+export async function ensureDirectory(dir: string) {
+  dir = resolvePath(dir);
+  const fragments = dir.split(sep);
+  let joint = fragments[0];
+  for(let i = 1; i < fragments.length; i++) {
+    joint = resolvePath(joint, fragments[i]);
+    if(!await existsAsync(joint))
+      await mkdirAsync(joint);
+  }
 }

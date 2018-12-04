@@ -112,7 +112,7 @@ terminal:
     cursorAccent: "#F80"
 
     # The selection color (can be transparent)
-    selection: "rgba(255,255,255,0.5)"
+    selection: "rgba(255,255,255,0.75)"
 
     # ANSI black (eg. `\x1b[30m`)
     black: "#111"

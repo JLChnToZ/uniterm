@@ -1,11 +1,12 @@
 import { app, BrowserWindow, ipcMain, IpcMessageEvent, shell, WebContents } from 'electron';
 import { dirname, relative as relativePath, resolve as resolvePath } from 'path';
 import * as yargs from 'yargs';
-import { configFilePath, loadConfig } from './config';
+import { configFilePath, loadConfig, reloadConfigPath } from './config';
 import { register as registerContextMenu } from './default-context-menu';
 import { TerminalLaunchOptions } from './interfaces';
-import { tryResolvePath } from './pathutils';
-import { versionString } from './version';
+import { ensureDirectory, tryResolvePath } from './pathutils';
+import { register as registerProtocol } from './protocol';
+import { packageJson, versionString } from './version';
 
 const windows: { [id: number]: BrowserWindow } = {};
 const readyWindowIds = new Set<number>();
@@ -13,6 +14,7 @@ let activeReadyWindowId: number | undefined;
 const openingWindows: { [id: number]: Array<(value: WebContents) => void> } = {};
 
 const args = yargs
+  .scriptName(packageJson.name)
   .usage('Usage: $0 [options] [--] [shellargs..]')
   .options({
     'cwd': {
@@ -44,11 +46,45 @@ const args = yargs
       boolean: true,
       describe: 'Resets the config file',
     },
+    'user-data': {
+      string: true,
+      hidden: true,
+      describe: 'Tell Uniterm to use specified directory for storing user data and shared instance info. ' +
+        'May be useful if you want to have a portable Uniterm.',
+    },
+    'disable-hardware-acceleration': {
+      boolean: true,
+      hidden: true,
+      describe: 'Disables hadrware acceleration. ' +
+        'This flag only have effect when the first Uniterm window launches.',
+    },
+    'disable-domain-blocking-for-3d-apis': {
+      boolean: true,
+      hidden: true,
+      describe: 'Keep 3D API enable even GPU process crashes too frequently. ' +
+        'This flag only have effect when the first Uniterm window launches.',
+    },
   })
   .version(versionString)
   .help();
 
-const argv = args.parse(process.argv.slice(1));
+const argv = app.isPackaged ?
+  args.parse(process.argv.slice(1)) :
+  args.argv;
+
+(async (userDataPath: string) => {
+  if(!userDataPath) return;
+  const original = app.getPath('userData');
+  try {
+    userDataPath = resolvePath(process.cwd(), userDataPath);
+    if(original === userDataPath) return;
+    app.setPath('userData', userDataPath);
+    await ensureDirectory(userDataPath);
+  } catch {
+    app.setPath('userData', original);
+    reloadConfigPath(true);
+  }
+})(argv['user-data'] || process.env.UNITERM_USER_DATA);
 
 if(argv.config || argv['reset-config'])
   loadConfig(false, argv['reset-config']).then(() => {
@@ -59,13 +95,23 @@ if(argv.config || argv['reset-config'])
     console.error(reason.message || reason);
     app.quit();
   });
-else if(!app.requestSingleInstanceLock())
+else if(!app.requestSingleInstanceLock()) {
+  printFlagNoEffectWarning(argv, 'disable-hardware-acceleration');
+  printFlagNoEffectWarning(argv, 'disable-domain-blocking-for-3d-apis');
   app.quit();
-else {
+} else {
+  if(argv['disable-hardware-acceleration'])
+    app.disableHardwareAcceleration();
+  if(argv['disable-domain-blocking-for-3d-apis'])
+    app.disableDomainBlockingFor3DAPIs();
   loadConfig();
+  args.exitProcess(false);
   const workingDir = process.cwd();
   process.chdir(dirname(app.getPath('exe')));
-  app.on('ready', () => openShell(argv, workingDir));
+  app.on('ready', () => {
+    registerProtocol();
+    openShell(argv, workingDir);
+  });
   app.on('window-all-closed', () => {
     if(process.platform !== 'darwin')
       app.quit();
@@ -74,7 +120,10 @@ else {
     if(!Object.keys(windows).length)
       createWindow();
   });
-  app.on('second-instance', (e, lArgv, cwd) => openShell(args.exitProcess(false).parse(lArgv.slice(1)), cwd));
+  app.on('second-instance', (e, lArgv, cwd) => openShell(
+    args.parse(app.isPackaged ? lArgv.slice(1) : lArgv),
+    cwd,
+  ));
   ipcMain.on('ready', (e: IpcMessageEvent) => {
     const { id } = e.sender;
     readyWindowIds.add(id);
@@ -89,6 +138,12 @@ else {
   });
 }
 
+function printFlagNoEffectWarning(lArgv: yargs.Arguments, key: string) {
+  if(lArgv[key])
+    console.warn('Warning: `%s` currently has no effect ' +
+      'because there is already an instance of Uniterm is running.', key);
+}
+
 function createWindow() {
   const window = new BrowserWindow({
     height: 600,
@@ -98,7 +153,7 @@ function createWindow() {
     titleBarStyle: 'hiddenInset',
   });
   const { id } = window;
-  window.loadFile(resolvePath(__dirname, '../static/index.html'));
+  window.loadURL('uniterm://app/');
   window.setMenu(null);
   registerContextMenu(window);
   windows[id] = window;
@@ -133,6 +188,7 @@ async function openShell(lArgv: yargs.Arguments, cwd: string) {
   if(Array.isArray(lArgv.env) && lArgv.env.length)
     for(let i = 0; i < lArgv.env.length; i += 2)
       env[lArgv.env[i]] = lArgv.env[i + 1];
+  env.UNITERM_USER_DATA = app.getPath('userData');
   // Resolve working directory, resolve to users's home if not set and launched directly at the executable path.
   try {
     if(lArgv.cwd)

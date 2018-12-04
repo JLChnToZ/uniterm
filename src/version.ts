@@ -1,11 +1,14 @@
 import showAboutWindow from 'about-window';
 import { readFileSync } from 'fs';
+import { IPackageJSON } from 'gist-package-json';
 import { dirname, resolve as resolvePath } from 'path';
 import { defaultContextMenuTemplate, register as registerMenu } from './default-context-menu';
 import { electron } from './remote-wrapper';
 
-const rootPath = resolvePath(__dirname, '..');
-const packageJson = JSON.parse(readFileSync(resolvePath(rootPath, 'package.json'), 'utf-8'));
+export const rootPath = resolvePath(__dirname, '..');
+export const packageJson: IPackageJSON = JSON.parse(
+  readFileSync(resolvePath(rootPath, 'package.json'), 'utf-8'),
+);
 
 export const versionString = `${packageJson.name} v${packageJson.version}\n` +
   (Object.keys(process.versions) as Array<keyof NodeJS.ProcessVersions>)
