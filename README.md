@@ -25,13 +25,13 @@ The features that exists in both Uniterm in Uniterm2:
   $ cd uniterm
   ```
 2. Install dependencies. (Assume you have installed Node.js,
-  NPM and requirements for building Node.js native modules)
+  (Yarn)[https://yarnpkg.com/] and requirements for building Node.js native modules)
   ```sh
-  $ npm i
+  $ yarn
   ```
 3. Build and package it.
   ```sh
-  $ npm run package
+  $ yarn package
   ```
 4. You will find your fresh build inside `dist/` folder.
 

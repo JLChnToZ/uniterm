@@ -1,5 +1,5 @@
-@import url(../node_modules/tocas-ui/dist/tocas.css);
-@import url(../node_modules/xterm/dist/xterm.css);
+@import url(/node_modules/tocas-ui/dist/tocas.css);
+@import url(/node_modules/xterm/dist/xterm.css);
 
 @font-face {
   font-family: "powerlinesymbols";

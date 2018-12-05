@@ -1,11 +1,16 @@
 const packager = require('electron-packager');
 const { rebuild } = require('electron-rebuild');
-const { writeFile, existsSync } = require('fs');
+const { writeFile, exists } = require('fs');
 const { resolve } = require('path');
+const { callbackify, promisify } = require('util');
+
+const existsAsync = promisify(exists);
+const rebuildCb = callbackify(rebuild);
 
 packager({
   dir: __dirname,
   overwrite: true,
+  arch: 'all',
   out: 'dist/',
   icon: 'icons/uniterm',
   appCopyright: 'Copyright (c) Jeremy Lam "JLChnToZ" 2017-2018.',
@@ -14,36 +19,40 @@ packager({
     InternalName: 'uniterm',
     OriginalFilename: 'uniterm.exe',
     FileDescription: 'Universal Terminal Emulator',
-    CompanyName: 'Explosive Theorem Lab.'
+    CompanyName: 'Explosive Theorem Lab.',
   },
   asar: {
-    unpackDir: 'node_modules/**/{R,r}elease'
+    unpackDir: 'node_modules/{wslpty,node-pty}',
   },
   ignore: [
-    /\.([a-z0-9]*ignore|gypi?|sln|pdb|md|t?log|cmd|bat|sh|ps1|lib|exp|map|cc|h|tsx?|sass|coffee)$/i,
-    /[\\\/](deps|tests?|example|bin)[\\\/]/i,
+    /\.([a-z0-9]*ignore|sln|pdb|md|t?log|ps1|lib|exp|map|tsx?|sass|coffee)$/i,
+    /[\\\/](tests?|example|bin)[\\\/]/i,
     /\.gitmodules/i,
     /ts(config|lint).json$/i,
     /\.[a-z]+proj(\.filters)?$/i,
     /\.packager\.js$/i,
     /readme[^\\\/]*$/i,
-    /(^|[\\\/])\.[^\\\/]*$/i
+    /(^|[\\\/])\.[^\\\/]*$/i,
   ],
   afterCopy: [
     (buildPath, electronVersion, platform, arch, callback) => {
-      console.log('Rebuild native modules...');
-      rebuild({
+      console.log('Rebuild native modules for Electron v%s %s %s...',
+        electronVersion,
+        platform,
+        arch
+      );
+      rebuildCb({
         buildPath,
         electronVersion,
         arch,
-      })
-      .then(() => callback(), err => callback(err))
+        force: true,
+      }, callback);
     },
-    (buildPath, electronVersion, platform, arch, callback) => {
+    async (buildPath, electronVersion, platform, arch, callback) => {
       if(platform !== 'win32')
         return callback();
       const path = resolve(buildPath, '../../uniterm');
-      if(existsSync(path))
+      if(await existsAsync(path))
         return callback();
       console.log('Create helper script for use in WSL...');
       writeFile(path,
