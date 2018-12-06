@@ -15,11 +15,28 @@
 html, body {
   background-color: black;
   height: 100%;
+  user-select: none;
+}
+
+textarea, input, *[contenteditable] {
+  user-select: all;
 }
 
 body {
-  border: 1px solid rgba(128,128,128,0.5);
   overflow: hidden;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99999;
+  border: 1px solid #888;
+  mix-blend-mode: exclusion;
+  pointer-events: none;
 }
 
 /* Tweak the terminal selection. */
@@ -32,7 +49,7 @@ body {
   display: flex;
   flex: auto;
   min-width: 10em;
-  margin-top: 5px;
+  margin-top: 3px;
 }
 
 .pty-tabs>.tabbed.menu .flex {

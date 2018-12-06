@@ -24,8 +24,8 @@ The features that exists in both Uniterm in Uniterm2:
   $ git clone https://github.com/JLChnToZ/uniterm.git
   $ cd uniterm
   ```
-2. Install dependencies. (Assume you have installed Node.js,
-  (Yarn)[https://yarnpkg.com/] and requirements for building Node.js native modules)
+2. Install dependencies. (Assume you have installed [Node.js](https://nodejs.org/),
+  [Yarn](https://yarnpkg.com/) and other [requirements](https://github.com/nodejs/node-gyp#installation) for building Electron/Node.js native modules)
   ```sh
   $ yarn
   ```
@@ -49,7 +49,7 @@ you can pass arguments to it (via any external shell or even the shell opened in
 
 Here is the command-line usage, that is, what you will get when you pass `--help`:
 ```text
-Usage: uniterm.exe --help [options] [--] [shellargs..]
+Usage: uniterm [options] [--] [shellargs..]
 
 Options:
   --cwd, -c         Working directory to start shell.                   [string]
@@ -63,8 +63,12 @@ Options:
   --help            Show help                                          [boolean]
 ```
 
+Also, if you pass `--show-hidden` together with `--help`, you will find out more options
+(which are not very necessary for normal use).
+
 Additionally, you can have full WSL integration if you launch WSL with Uniterm by pass `wsl` as the shell exactly
-such as `uniterm [options] [--] wsl [args..]` (Of cause this is a Windows only feature, this won't works on other platforms).
+like `uniterm [options] [--] wsl [args..]`, and the optional `args` in here is
+for putting what command should run inside automatically once the WSL bash has been launched.
 Your system's firewall may complain if you first time to launch the WSL with Uniterm,
 as Uniterm needs to seek a free TCP port and open it to localhost for communicate between Windows side and Linux side.
 When it asks for such permission, just allow it or it will not work.
