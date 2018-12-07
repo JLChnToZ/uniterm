@@ -69,6 +69,7 @@ changeMaximizeIcon();
 
 const tabs = new Set<Tab>();
 let activeTab: Tab | undefined;
+let ctrlKeyDown: boolean = false;
 
 events.on('config', () => {
   window.dispatchEvent(new CustomEvent('configreload', {}));
@@ -123,7 +124,10 @@ class Tab implements IDisposable {
       fontFamily: 'powerlinesymbols, monospace',
       cursorBlink: true,
     });
-    webLinksInit(this.terminal, (e, uri) => shell.openExternal(uri));
+    webLinksInit(this.terminal, (e, uri) => ctrlKeyDown && shell.openExternal(uri), {
+      tooltipCallback: () => ctrlKeyDown,
+      willLinkActivate: () => ctrlKeyDown,
+    });
     winptyCompatInit(this.terminal);
     this.disposables = [];
     this.active = true;
@@ -374,6 +378,13 @@ window.addEventListener('resize', () => {
 
 document.body.addEventListener('dragenter', interceptDrop);
 document.body.addEventListener('dragover', interceptDrop);
+
+function detectCtrlKey(e: KeyboardEvent) {
+  ctrlKeyDown = e.ctrlKey;
+}
+
+document.body.addEventListener('keydown', detectCtrlKey, true);
+document.body.addEventListener('keyup', detectCtrlKey, true);
 
 if(document.readyState !== 'complete')
   document.addEventListener('readystatechange', () => {
