@@ -70,12 +70,35 @@ body::after {
   padding: 0.5em;
 }
 
+.pty-tabs>.tabbed.menu .flex>.item {
+  flex: auto;
+  min-width: 6em;
+  max-width: 100%;
+}
+
+.pty-tabs>.tabbed.menu .flex>.item:last-child {
+  min-width: auto;
+  max-width: auto;
+}
+
+.pty-tabs>.tabbed.menu .flex>.item>.title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .pty-tabs>.tab.segment {
   padding: 0;
 }
 
+.ts.close.button.small {
+  min-width: 18px;
+  min-height: 18px;
+}
+
 img[src^="fileicon://"] {
   padding: 0 0.5em;
+  max-width: 32px;
+  max-height: 16px;
 }
 
 .pty-container {
