@@ -1,47 +1,14 @@
 import { spawn } from 'child_process';
-import { exists, mkdir, stat } from 'fs';
-import { delimiter, dirname, extname, resolve as resolvePath, sep } from 'path';
+import { exists, mkdir, readFile, writeFile } from 'fs';
+import { delimiter, dirname, resolve as resolvePath, sep } from 'path';
 import { promisify } from 'util';
+import * as which from 'which';
 
-const existsAsync = promisify(exists);
-const statAsync = promisify(stat);
-const mkdirAsync = promisify(mkdir);
-
-function getPathsBuilder(extraPaths: string | string[]) {
-  let cwd: string | undefined;
-  let paths: string[] | undefined;
-  return function*() {
-    if(Array.isArray(extraPaths))
-      yield* extraPaths;
-    yield cwd || (cwd = process.cwd());
-    yield* paths || (paths = process.env.PATH.split(delimiter));
-  };
-}
-
-// Workaround for Windows executable extensions matching
-function getExtensionsBuilder(targetPath: string) {
-  if (process.platform !== 'win32' || extname(targetPath).length) {
-    const p = [targetPath];
-    return () => p;
-  }
-  let pathext: string[] | undefined;
-  return function*() {
-    for(const ext of pathext || (pathext = process.env.PATHEXT.toLowerCase().split(delimiter)))
-      yield targetPath + ext;
-    yield targetPath;
-  };
-}
-
-export async function resolveExecutable(targetPath: string, ...extraPaths: string[]) {
-  const extensions = Array.from(getExtensionsBuilder(targetPath)());
-  for(const basePath of getPathsBuilder(extraPaths)())
-    for(const extPath of extensions) {
-      const resolvedPath = resolvePath(basePath, extPath);
-      if(await existsAsync(resolvedPath) && (await statAsync(resolvedPath)).isFile())
-        return resolvedPath;
-    }
-  throw new Error(`"${targetPath}" does not exist.`);
-}
+export const readFileAsync = promisify(readFile);
+export const writeFileAsync = promisify(writeFile);
+export const existsAsync = promisify(exists);
+export const mkdirAsync = promisify(mkdir);
+export const whichAsync = promisify(which);
 
 // Function borrowed from wslpty
 export async function resolveWslPath(originalPath: string): Promise<string> {

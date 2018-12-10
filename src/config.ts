@@ -1,15 +1,13 @@
 import { EventEmitter } from 'events';
-import { exists, FSWatcher, readFile, watch, writeFile } from 'fs';
+import { FSWatcher, watch } from 'fs';
 import { load } from 'js-yaml';
 import { resolve } from 'path';
 import { setTimeout } from 'timers';
 import { promisify } from 'util';
 import { ITerminalOptions } from 'xterm';
+import { existsAsync, readFileAsync, writeFileAsync } from './pathutils';
 import { electron } from './remote-wrapper';
 
-const readFileAsync = promisify(readFile);
-const writeFileAsync = promisify(writeFile);
-const existsAsync = promisify(exists);
 const delay = promisify(setTimeout);
 
 export interface ConfigFile {

@@ -26,7 +26,7 @@ packager({
   },
   ignore: [
     /\.([a-z0-9]*ignore|sln|pdb|md|t?log|ps1|lib|exp|map|tsx?|sass|coffee)$/i,
-    /[\\\/](tests?|example|bin)[\\\/]/i,
+    /[\\\/](tests?|example|bin|obj|build)[\\\/]/i,
     /\.gitmodules/i,
     /ts(config|lint).json$/i,
     /\.[a-z]+proj(\.filters)?$/i,

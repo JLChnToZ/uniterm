@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@types/gist-package-json": "git+https://gist.github.com/5c1cc527fe6b5b7dba41fec7fe54bf6e.git",
+    "@types/which": "^1.3.1",
     "about-window": "^1.12.1",
     "code-to-signal": "^1.0.2",
     "default-shell": "^1.0.1",
@@ -48,6 +49,7 @@
     "node-pty": "^0.7.8",
     "shell-escape": "^0.2.0",
     "tocas-ui": "^2.3.2",
+    "which": "^1.3.1",
     "wslpty": "^0.2.1",
     "xterm": "^3.8.0",
     "yargs": "^12.0.2"

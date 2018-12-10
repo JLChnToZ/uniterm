@@ -74,6 +74,10 @@ body::after {
   padding: 0;
 }
 
+img[src^="fileicon://"] {
+  padding: 0 0.5em;
+}
+
 .pty-container {
   position: fixed;
   top: 2.5em;

@@ -111,16 +111,13 @@ else if(!app.requestSingleInstanceLock()) {
   app.on('ready', () => {
     registerProtocol();
     openShell(argv, workingDir);
-  });
-  app.on('window-all-closed', () => {
+  }).on('window-all-closed', () => {
     if(process.platform !== 'darwin')
       app.quit();
-  });
-  app.on('activate', () => {
+  }).on('activate', () => {
     if(!Object.keys(windows).length)
       createWindow();
-  });
-  app.on('second-instance', (e, lArgv, cwd) => openShell(
+  }).on('second-instance', (e, lArgv, cwd) => openShell(
     args.parse(app.isPackaged ? lArgv.slice(1) : lArgv),
     cwd,
   ));
@@ -135,7 +132,9 @@ else if(!app.requestSingleInstanceLock()) {
       delete openingWindows[id];
     } else
       e.sender.send('create-terminal', {});
-  });
+  }).on('show-config', () =>
+    shell.openItem(configFilePath),
+  );
 }
 
 function printFlagNoEffectWarning(lArgv: yargs.Arguments, key: string) {

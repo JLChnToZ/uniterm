@@ -25,22 +25,30 @@ export class WslPtyShell extends TerminalBase<IPty> {
       }
 
       // Grab already exists configuations
-      const wslenv = (this.env.WSLENV || '').split(':');
-      for(const keyFlag of wslenv) {
-        const [key, ...flags] = keyFlag.split('/');
-        const flagSet = new Set<string>(flags);
-        if(keys.has(key))
-          [...keys.get(key)].forEach(flagSet.add, flagSet);
-        keys.set(key, [...flagSet].join(''));
+      if(this.env.WSLENV) {
+        const wslenv = this.env.WSLENV.split(':');
+        for(const keyFlag of wslenv)
+          if(keyFlag.indexOf('/') >= 0) {
+            const [key, ...flags] = keyFlag.split('/');
+            const flagSet = new Set<string>(flags);
+            const addedFlags = keys.get(key);
+            if(addedFlags) [...addedFlags].forEach(flagSet.add, flagSet);
+            if(flagSet.size) keys.set(key, [...flagSet].join(''));
+            else keys.set(key, '');
+          } else if(!keys.has(keyFlag))
+            keys.set(keyFlag, '');
       }
+
+      // No need to reference WSLENV within keys
+      keys.delete('WSLENV');
 
       // Pass back to wslenv
       if(keys.size) {
         this.env.WSLENV = '';
         for(const [key, flags] of keys)
           this.env.WSLENV +=
-            (this.env.WSLENV ? ':' : '') +
-            (flags ? `${key}/${flags}` : key);
+            (this.env.WSLENV && ':') + key +
+            (flags && `/${flags}`);
       }
     }
   }

@@ -14,32 +14,35 @@ import { TerminalBase, TerminalOptions } from './terminals/base';
 import { PtyShell } from './terminals/pty';
 import { WslPtyShell } from './terminals/wslpty';
 
-let rootContainer: HTMLElement;
-let tabContainer: HTMLElement;
-let addButton: HTMLElement;
+const addButton = <a className="item" onclick={async () => {
+  await loadConfig();
+  new Tab().attach(createBackend({
+    cwd: electron.app.getPath('home'),
+  }));
+}} title="Add Tab">
+  <i className="ts plus icon" />
+</a> as HTMLElement;
+const tabContainer = <div className="flex">{addButton}</div> as HTMLElement;
 let maximizeIcon: HTMLElement;
-rootContainer = document.body.appendChild(<div className="pty-tabs">
+const rootContainer = document.body.appendChild(<div className="pty-tabs">
   <div className="ts top attached mini tabbed menu">
     {process.platform === 'darwin' ?
       <div className="window-control-mac" /> : null}
-    {tabContainer = <div className="flex">{
-      addButton = <a className="item" onclick={async () => {
-        await loadConfig();
-        new Tab().attach(createBackend({
-          cwd: electron.app.getPath('home'),
-        }));
-      }}>
-        <i className="ts plus icon" />
-      </a> as HTMLElement
-    }</div> as HTMLElement}
+    {tabContainer}
     <div className="drag" />
+    <a className="item" onclick={() =>
+      ipcRenderer.send('show-config')
+    } title="Config">
+      <i className="ts setting icon" />
+    </a>
     {process.platform !== 'darwin' ? (browserWindow => {
       browserWindow.on('maximize', changeMaximizeIcon);
       browserWindow.on('unmaximize', changeMaximizeIcon);
       browserWindow.on('restore', changeMaximizeIcon);
       return [
         <a className="item"
-          onclick={() => browserWindow.minimize()}>
+          onclick={() => browserWindow.minimize()}
+          title="Minimize">
             <i className="ts window minimize icon" />
         </a>,
         <a className="item"
@@ -48,11 +51,13 @@ rootContainer = document.body.appendChild(<div className="pty-tabs">
               browserWindow.unmaximize();
             else
               browserWindow.maximize();
-          }}>
+          }}
+          title="Maximize">
           {maximizeIcon = <i className="ts window maximize icon" /> as HTMLElement}
         </a>,
         <a className="negative item"
-          onclick={() => browserWindow.close()}>
+          onclick={() => browserWindow.close()}
+          title="Close">
           <i className="ts close icon" />
         </a>,
       ];
@@ -112,7 +117,7 @@ class Tab implements IDisposable {
   public defaultTitle: string;
   public tabElement: HTMLElement;
   public tabContent: HTMLElement;
-  public tabContentText: Text;
+  public tabContentText: HTMLElement;
   public active: boolean;
   public pause?: boolean;
   private explicitTitle?: boolean;
@@ -135,11 +140,12 @@ class Tab implements IDisposable {
       interceptEvent(e);
       this.onEnable();
     }}>
-      {this.tabContentText = document.createTextNode('')}
+      <i className="ts terminal icon" />
+      {this.tabContentText = <span className="title-text" /> as HTMLElement}
       <a className="ts small negative close button" onclick={e => {
         interceptEvent(e);
         this.dispose();
-      }} />
+      }} title="Close Tab" />
     </a> as HTMLElement, addButton);
     this.tabContent = <div
       ondragenter={this.handleDragOver.bind(this)}
@@ -178,6 +184,16 @@ class Tab implements IDisposable {
     }
     window.dispatchEvent(new CustomEvent('tabattached', { detail: this }));
     this.handleTitleChange(this.title);
+    this.tabElement.firstChild.remove();
+    this.tabElement.insertBefore(
+      (this.pty && this.pty.resolvedPath) ?
+      <img
+        src={`fileicon://${this.pty.resolvedPath}`}
+        draggable={false}
+      /> :
+      <i className="ts terminal icon" />,
+      this.tabElement.firstChild,
+    );
   }
 
   public printDisposableMessage(message: string, isError: boolean = true) {
@@ -239,7 +255,10 @@ class Tab implements IDisposable {
 
   private handleTitleChange(title?: string) {
     this.title = title && title.trim() || this.processTitle || this.defaultTitle;
-    if(this.tabContentText) this.tabContentText.textContent = this.title;
+    if(this.tabContentText) {
+      this.tabContentText.textContent = this.title;
+      this.tabContentText.title = this.title;
+    }
     if(this.active) setTitle(this.title);
   }
 

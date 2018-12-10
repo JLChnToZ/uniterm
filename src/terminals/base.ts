@@ -14,6 +14,7 @@ export abstract class TerminalBase<TPty> extends Duplex {
   public process?: string;
   public pty?: TPty;
   public path?: string;
+  public resolvedPath?: string;
   public argv?: string[];
   public cols: number = 80;
   public rows: number = 30;
@@ -62,6 +63,5 @@ export abstract class TerminalBase<TPty> extends Duplex {
       this.buffered.push(data);
     else if(!this.push(data, this.encoding))
       this.buffered = [];
-
   }
 }

@@ -83,10 +83,10 @@ and some events) exposed to `window` namespace. To start modding, you may have
 a look to [renderer.tsx](src/renderer.tsx) and its imports to figure out what is
 it doing.
 
-Once you created your mod or grabbed one from someone who made it, type
-`uniterm --config` inside the Uniterm terminal, you should opened up a
-[YAML](http://yaml.org/) config file with your favourite text editor, scroll to
-bottom and you will see the hints: save/put the mod script file into the folder
+Once you created your mod or grabbed one from someone who made it, click on the gear icon
+at the top-right corner or type `uniterm --config` inside the Uniterm terminal,
+you should opened up a [YAML](http://yaml.org/) config file with your favourite text editor,
+scroll to bottom and you will see the hints: save/put the mod script file into the folder
 it wrotes and add the filename under the mods field.
 
 When you saved the config file, the terminal should immediately load/reloads
