@@ -188,7 +188,7 @@ class Tab implements IDisposable {
     this.tabElement.insertBefore(
       (this.pty && this.pty.resolvedPath) ?
       <img
-        src={`fileicon://${this.pty.resolvedPath}`}
+        src={`fileicon://${this.pty.resolvedPath}:small.png`}
         draggable={false}
       /> :
       <i className="ts terminal icon" />,
