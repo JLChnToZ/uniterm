@@ -26,6 +26,10 @@ body {
   overflow: hidden;
 }
 
+img {
+  -webkit-user-drag: none;
+}
+
 body::after {
   content: '';
   position: fixed;
@@ -83,7 +87,10 @@ body::after {
 
 .pty-tabs>.tabbed.menu .flex>.item>.title-text {
   overflow: hidden;
+  white-space: nowrap;
+  word-wrap: normal;
   text-overflow: ellipsis;
+  line-height: 150%;
 }
 
 .pty-tabs>.tab.segment {

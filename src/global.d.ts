@@ -26,3 +26,21 @@ declare module 'code-to-signal' {
   }
   export = CodeToSignal;
 }
+
+declare module 'isexe' {
+  interface IsExeOptions {
+    ignoreErrors?: boolean;
+    uid?: number;
+    gid?: number;
+    pathExt?: string;
+  }
+  interface IsExe {
+    (path: string, callback?: (err: Error, isExe: boolean) => void): void;
+    (path: string, options: IsExeOptions, callback?: (err: Error, isExe: boolean) => void): void;
+    sync(path: string, options?: IsExeOptions): boolean;
+    // Promisify
+    __promisify__: (path: string, options?: IsExeOptions) => Promise<boolean>;
+  }
+  const isExe: IsExe;
+  export = isExe;
+}

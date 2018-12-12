@@ -4,7 +4,7 @@ import * as yargs from 'yargs';
 import { configFilePath, loadConfig, reloadConfigPath } from './config';
 import { register as registerContextMenu } from './default-context-menu';
 import { TerminalLaunchOptions } from './interfaces';
-import { ensureDirectory, tryResolvePath } from './pathutils';
+import { ensureDirectory, existsAsync, isExeAsync, lstatAsync, tryResolvePath } from './pathutils';
 import { register as registerProtocol } from './protocol';
 import { packageJson, versionString } from './version';
 
@@ -68,7 +68,37 @@ const args = yargs
   .version(versionString)
   .help();
 
-const argv = app.isPackaged ?
+interface Arguments extends yargs.Arguments {
+  /** Working directory to start shell. */
+  cwd?: string; c?: string;
+  /** Add/modify environment variable passed into the shell. */
+  env?: string[]; e?: string[];
+  /** Open the shell in a new window */
+  'new-window'?: boolean; n?: boolean;
+  /** Pauses after shell/program exits */
+  pause?: boolean; p?: boolean;
+  /** Opens the config file */
+  config?: boolean;
+  /** Resets the config file */
+  'reset-config'?: boolean;
+  /**
+   * Tell Uniterm to use specified directory for storing user data and shared instance info.
+   * May be useful if you want to have a portable Uniterm.
+   */
+  'user-data'?: string;
+  /**
+   * Disables hadrware acceleration.
+   * This flag only have effect when the first Uniterm window launches.
+   */
+  'disable-hardware-acceleration'?: boolean;
+  /**
+   * Keep 3D API enable even GPU process crashes too frequently.
+   * This flag only have effect when the first Uniterm window launches.
+   */
+  'disable-domain-blocking-for-3d-apis'?: boolean;
+}
+
+const argv: Arguments = app.isPackaged ?
   args.parse(process.argv.slice(1)) :
   args.argv;
 
@@ -87,14 +117,16 @@ const argv = app.isPackaged ?
 })(argv['user-data'] || process.env.UNITERM_USER_DATA);
 
 if(argv.config || argv['reset-config'])
-  loadConfig(false, argv['reset-config']).then(() => {
-    if(argv.config)
-      shell.openItem(configFilePath);
+  (async (resetConfig: boolean) => {
+    try {
+      await loadConfig(false, resetConfig);
+      if(argv.config)
+        shell.openItem(configFilePath);
+    } catch(e) {
+      console.error(e.message || e);
+    }
     app.quit();
-  }, reason => {
-    console.error(reason.message || reason);
-    app.quit();
-  });
+  })(argv['reset-config']);
 else if(!app.requestSingleInstanceLock()) {
   printFlagNoEffectWarning(argv, 'disable-hardware-acceleration');
   printFlagNoEffectWarning(argv, 'disable-domain-blocking-for-3d-apis');
@@ -137,7 +169,7 @@ else if(!app.requestSingleInstanceLock()) {
   );
 }
 
-function printFlagNoEffectWarning(lArgv: yargs.Arguments, key: string) {
+function printFlagNoEffectWarning(lArgv: Arguments, key: keyof Arguments) {
   if(lArgv[key])
     console.warn('Warning: `%s` currently has no effect ' +
       'because there is already an instance of Uniterm is running.', key);
@@ -181,19 +213,33 @@ function getWindow(newWindow?: boolean) {
   });
 }
 
-async function openShell(lArgv: yargs.Arguments, cwd: string) {
+async function openShell(lArgv: Arguments, cwd: string) {
   // Join env values
   const env: { [key: string]: string } = {};
   if(Array.isArray(lArgv.env) && lArgv.env.length)
     for(let i = 0; i < lArgv.env.length; i += 2)
       env[lArgv.env[i]] = lArgv.env[i + 1];
   env.UNITERM_USER_DATA = app.getPath('userData');
-  // Resolve working directory, resolve to users's home if not set and launched directly at the executable path.
+  // Resolve working directory
   try {
     if(lArgv.cwd)
       cwd = tryResolvePath(cwd, lArgv.cwd);
-    else if(!relativePath(cwd, dirname(app.getPath('exe'))))
-      cwd = process.platform === 'win32' && lArgv._[0] === 'wsl' ? '~' : app.getPath('home');
+    else {
+      let cdPath = false;
+      if(lArgv._.length === 1 && !await isExeAsync(lArgv._[0], { ignoreErrors: true })) {
+        // Hidden usage: if the *only* parameter is a valid directory path,
+        // treat it as working directory.
+        const tryPath = resolvePath(cwd, lArgv._[0]);
+        if(await existsAsync(tryPath) && (await lstatAsync(tryPath)).isDirectory()) {
+          cwd = tryPath;
+          lArgv._.length = 0;
+          cdPath = true;
+        }
+      }
+      if(!cdPath && !relativePath(cwd, dirname(app.getPath('exe'))))
+        // Resolve cwd to users's home if not set and launched directly at the executable path.
+        cwd = process.platform === 'win32' && lArgv._[0] === 'wsl' ? '~' : app.getPath('home');
+    }
   } catch {}
   const options: TerminalLaunchOptions = {
     path: lArgv._[0],

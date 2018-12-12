@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
-import { exists, mkdir, readFile, writeFile } from 'fs';
+import { exists, lstat, mkdir, readFile, writeFile } from 'fs';
+import * as isExe from 'isexe';
 import { delimiter, dirname, resolve as resolvePath, sep } from 'path';
 import { promisify } from 'util';
 import * as which from 'which';
@@ -8,6 +9,8 @@ export const readFileAsync = promisify(readFile);
 export const writeFileAsync = promisify(writeFile);
 export const existsAsync = promisify(exists);
 export const mkdirAsync = promisify(mkdir);
+export const lstatAsync = promisify(lstat);
+export const isExeAsync = promisify(isExe);
 export const whichAsync = promisify(which);
 
 // Function borrowed from wslpty
