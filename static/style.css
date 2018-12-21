@@ -1,15 +1,16 @@
 @import url(/node_modules/tocas-ui/dist/tocas.css);
 @import url(/node_modules/xterm/dist/xterm.css);
 
+/* Fallback */
 @font-face {
-  font-family: "powerlinesymbols";
-  src: url("./PowerlineExtraSymbols.woff") format('woff');
+  font-family: 'powerlinesymbols';
+  src: url('./mononoki-nerd-font.woff') format('woff');
+  unicode-range: U+e0a0-e0d7;
 }
 
 @font-face {
-  font-family: "powerlinesymbols";
-  src: url("./PowerlineExtraSymbols.woff") format('woff');
-  font-weight: bold;
+  font-family: 'mononoki';
+  src: url('./mononoki-nerd-font.woff') format('woff');
 }
 
 html, body {
@@ -28,6 +29,18 @@ body {
 
 img {
   -webkit-user-drag: none;
+}
+
+/* Force load font */
+body::before {
+  content: 'a';
+  font-family: mononoki;
+  opacity: 0;
+  position: fixed;
+  left: -100%;
+  top: -100%;
+  z-index: -100;
+  pointer-events: none;
 }
 
 body::after {
@@ -102,7 +115,7 @@ body::after {
   min-height: 18px;
 }
 
-img[src^="fileicon://"] {
+img[src^='fileicon://'] {
   padding: 0 0.5em;
   max-width: 32px;
   max-height: 16px;

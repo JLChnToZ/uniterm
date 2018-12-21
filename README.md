@@ -7,7 +7,7 @@ Difference between Uniterm2 and old Uniterm:
 - Uniterm2 has removed built-in MinSH component which exists in the old one.
 - Uniterm2 is written with TypeScript and the old one is plain JavaScript.
 - Uniterm2 supports dropping files that the old one does not.
-- Uniterm2 built-in supports powerline decorations.
+- Uniterm2 built-in supports powerline decorations (via all-in-one patched [Mononoki](https://madmalik.github.io/mononoki/) font with [Nerd Fonts](https://NerdFonts.com)).
 - Uniterm2 has a simple modding mechanism that does not exists in the old one.
   (see modding section below for details)
 
@@ -37,7 +37,7 @@ The features that exists in both Uniterm in Uniterm2:
 
 Or if you are lazy to do it/does not meet the requirements to build it, but
 you want to use/try it, you may go to [releases](https://github.com/JLChnToZ/uniterm/releases)
-and download the prebuilt binaries. (Currently Windows x64 is available only,
+and download the prebuilt binaries. (Currently Windows is available only,
 sorry for other platforms)
 
 ## Using

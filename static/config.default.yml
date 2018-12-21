@@ -3,12 +3,14 @@ terminal:
   # Whether background should support non-opaque color. It must be set before
   # executing open() method and can't be changed later without excuting it again.
   # Warning: Enabling this option can reduce performances somewhat.
+  # Valid values: true, false
   allowTransparency: true
 
   # A data uri of the sound to use for the bell (needs bellStyle = 'sound').
   bellSound: ""
 
   # The type of the bell notification the terminal will use.
+  # Valid values: none, sound
   bellStyle: none
 
   # When enabled the cursor will be set to the beginning of the next line
@@ -17,15 +19,19 @@ terminal:
   # translation of '\n' to '\r\n' and this setting should not be used. If you
   # deal with data from a non-PTY related source, this settings might be
   # useful.
+  # Valid values: true, false
   convertEol: false
 
   # Whether the cursor blinks.
+  # Valid values: true, false
   cursorBlink: true
 
   # The style of the cursor.
+  # Valid values: block, underline, bar
   cursorStyle: block
 
   # Whether to draw bold text in bright colors. The default is true.
+  # Valid values: true, false
   drawBoldTextInBrightColors: true
 
   # What character atlas implementation to use. The character atlas caches drawn characters,
@@ -42,18 +48,24 @@ terminal:
   #
   # Currently defaults to 'static'. This option may be removed in the future. If it is, passed
   # parameters will be ignored.
+  # Valid values: none, static, dynamic
   experimentalCharAtlas: static
 
   # The font size used to render text.
   fontSize: 12
 
   # The font family used to render text.
-  fontFamily: powerlinesymbols, monospace
+  # If you need special characters support (i.e. powerline symbols),
+  # keep 'mononoki' as a fallback (which has been patched to have those characters).
+  # Valid values: any valid CSS font family list
+  fontFamily: mononoki, monospace
 
   # The font weight used to render non-bold text.
+  # Valid values: any valid CSS font weight
   fontWeight: normal
 
   # The font weight used to render bold text.
+  # Valid values: any valid CSS font weight
   fontWeightBold: normal
 
   # The spacing in whole pixels between characters..
@@ -63,6 +75,7 @@ terminal:
   lineHeight: 1
 
   # Whether to treat option as the meta key.
+  # Valid values: true, false
   macOptionIsMeta: false
 
   # Whether holding a modifier key will force normal selection behavior,
@@ -70,6 +83,7 @@ terminal:
   # also prevent mouse events from being emitted by the terminal. For example,
   # this allows you to use xterm.js' regular selection inside tmux with
   # mouse mode enabled.
+  # Valid values: true, false
   macOptionClickForcesSelection: false
 
   # The type of renderer to use, this allows using the fallback DOM renderer
@@ -79,15 +93,18 @@ terminal:
   # - Line height
   # - Letter spacing
   # - Cursor blink
+  # Valid values: dom, canvas
   rendererType: canvas
 
   # Whether to select the word under the cursor on right click, this is
   # standard behavior in a lot of macOS applications.
+  # Valid values: true, false
   rightClickSelectsWord: false
 
   # Whether screen reader support is enabled. When on this will expose
   # supporting elements in the DOM to support NVDA on Windows and VoiceOver
   # on macOS.
+  # Valid values: true, false
   screenReaderMode: false
 
   # The amount of scrollback in the terminal. Scrollback is the amount of rows
@@ -98,6 +115,7 @@ terminal:
   tabStopWidth: 4
 
   # The color theme of the terminal.
+  # Valid values: any CSS colors
   theme:
     # The default foreground color
     foreground: "#FFF"

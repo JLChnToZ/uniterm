@@ -32,10 +32,10 @@ function handleAppProtocol(request: Electron.RegisterFileProtocolRequest) {
     return;
   const url = parse(request.url).pathname;
   if(url.startsWith('/userdata/'))
-    return resolvePath(app.getPath('userData'), url.substr(10));
+    return resolvePath(app.getPath('userData'), decodeURI(url.substr(10)));
   if(url.startsWith('/node_modules/'))
-    return resolvePath(rootPath, url.substr(1));
-  return resolvePath(staticPath, url.substr(1) || 'index.html');
+    return resolvePath(rootPath, decodeURI(url.substr(1)));
+  return resolvePath(staticPath, decodeURI(url.substr(1)) || 'index.html');
 }
 
 /* File Icon URI Protocol Format:
