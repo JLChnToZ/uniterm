@@ -42,6 +42,11 @@ const args = yargs
       boolean: true,
       describe: 'Opens the config file',
     },
+    'isolated': {
+      boolean: true,
+      describe: 'Create an isolated process (Useful for running multiple Uniterm in different privages)',
+      alias: 'i',
+    },
     'reset-config': {
       boolean: true,
       describe: 'Resets the config file',
@@ -75,6 +80,8 @@ interface Arguments extends yargs.Arguments {
   env?: string[]; e?: string[];
   /** Open the shell in a new window */
   'new-window'?: boolean; n?: boolean;
+  /** Create an isolated process */
+  isolated?: boolean; i?: boolean;
   /** Pauses after shell/program exits */
   pause?: boolean; p?: boolean;
   /** Opens the config file */
@@ -127,7 +134,7 @@ if(argv.config || argv['reset-config'])
     }
     app.quit();
   })(argv['reset-config']);
-else if(!app.requestSingleInstanceLock()) {
+else if(!argv.isolated && !app.requestSingleInstanceLock()) {
   printFlagNoEffectWarning(argv, 'disable-hardware-acceleration');
   printFlagNoEffectWarning(argv, 'disable-domain-blocking-for-3d-apis');
   app.quit();
@@ -149,10 +156,12 @@ else if(!app.requestSingleInstanceLock()) {
   }).on('activate', () => {
     if(!Object.keys(windows).length)
       createWindow();
-  }).on('second-instance', (e, lArgv, cwd) => openShell(
-    args.parse(app.isPackaged ? lArgv.slice(1) : lArgv),
-    cwd,
-  ));
+  });
+  if(!argv.isolated)
+    app.on('second-instance', (e, lArgv, cwd) => openShell(
+      args.parse(app.isPackaged ? lArgv.slice(1) : lArgv),
+      cwd,
+    ));
   ipcMain.on('ready', (e: IpcMessageEvent) => {
     const { id } = e.sender;
     readyWindowIds.add(id);

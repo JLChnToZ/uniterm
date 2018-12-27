@@ -5,6 +5,7 @@ const { resolve } = require('path');
 const { callbackify, promisify } = require('util');
 
 const existsAsync = promisify(exists);
+const writeFileAsync = promisify(writeFile);
 const rebuildCb = callbackify(rebuild);
 
 packager({
@@ -48,18 +49,38 @@ packager({
         force: true,
       }, callback);
     },
-    async (buildPath, electronVersion, platform, arch, callback) => {
-      if(platform !== 'win32')
-        return callback();
+    callbackify(async (buildPath, electronVersion, platform, arch) => {
+      if(platform !== 'win32') return;
       const path = resolve(buildPath, '../../uniterm');
-      if(await existsAsync(path))
-        return callback();
+      if(await existsAsync(path)) return;
       console.log('Create helper script for use in WSL...');
-      writeFile(path,
+      return await writeFileAsync(path,
         '#!/usr/bin/env sh\nuniterm.exe $@\n',
-        'utf-8',
-        callback
+        'utf-8'
       );
-    },
+    }),
+    callbackify(async (buildPath, electronVersion, platform, arch) => {
+      if(platform !== 'win32') return;
+      const path = resolve(buildPath, '../..');
+      console.log('Create helper script for launch in privaged mode (Admin)');
+      // CMD wrapper script: Spawn PowerShell for run uniterm with raised permissions.
+      if(!await existsAsync(path + '/uniterm-su.cmd'))
+        await writeFileAsync(path + '/uniterm-su.cmd',
+          '@echo off\r\npowershell -NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0\\.uniterm-su.ps1" "%*"',
+          'utf-8'
+        );
+      // Powershell wrapper script: Spawn independent PowerShell to prevent StdIO hook from electron.
+      if(!await existsAsync(path + '/uniterm-su.ps1'))
+        await writeFileAsync(path + '/uniterm-su.ps1',
+          'Start-Process -FilePath powershell -ArgumentList "-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File $(Join-Path (Get-Item $MyInvocation.MyCommand.Path).Directory.FullName ".uniterm-su.ps1" -Resolve) `"$args`""',
+          'utf-8'
+        );
+      // Powershell isolated script: actual launcher is in this script.
+      if(!await existsAsync(path + '/.uniterm-su.ps1'))
+        await writeFileAsync(path + '/.uniterm-su.ps1',
+          'Start-Process -FilePath (Join-Path (Get-Item $MyInvocation.MyCommand.Path).Directory.FullName "uniterm.exe" -Resolve) -Verb runAs -ArgumentList "--isolated $args"',
+          'utf-8'
+        );
+    }),
   ],
 });
