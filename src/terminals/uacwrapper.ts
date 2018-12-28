@@ -49,9 +49,7 @@ export class UACClient extends TerminalBase<Socket> {
         '-Verb', 'runAs',
         '-ArgumentList', `"${appPathResolver} --pipe=${pipe}"`,
       ].join(' '),
-    ], {
-      env: { ELECTRON_RUN_AS_NODE: true },
-    }).once('exit', this.handleSpawnerClose);
+    ]).once('exit', this.handleSpawnerClose);
     const path = this.path || defaultShell;
     this.process = `SUDO: ${basename(path)}`;
     this.resolvedPath = await whichAsync(path);

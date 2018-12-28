@@ -127,7 +127,10 @@ const argv: Arguments = app.isPackaged ?
   }
 })(argv['user-data'] || process.env.UNITERM_USER_DATA);
 
-if(argv.config || argv['reset-config'])
+if(argv.pipe) {
+  app.disableHardwareAcceleration();
+  connectToClient(argv.pipe);
+} else if(argv.config || argv['reset-config'])
   (async (resetConfig: boolean) => {
     try {
       await loadConfig(false, resetConfig);
@@ -138,10 +141,7 @@ if(argv.config || argv['reset-config'])
     }
     app.quit();
   })(argv['reset-config']);
-else if(argv.pipe) {
-  app.disableHardwareAcceleration();
-  connectToClient(argv.pipe);
-} else if(!argv.isolated && !app.requestSingleInstanceLock()) {
+else if(!argv.isolated && !app.requestSingleInstanceLock()) {
   printFlagNoEffectWarning(argv, 'disable-hardware-acceleration');
   printFlagNoEffectWarning(argv, 'disable-domain-blocking-for-3d-apis');
   app.quit();
