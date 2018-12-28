@@ -10,6 +10,8 @@ Difference between Uniterm2 and old Uniterm:
 - Uniterm2 built-in supports powerline decorations (via all-in-one patched [Mononoki](https://madmalik.github.io/mononoki/) font with [Nerd Fonts](https://NerdFonts.com)).
 - Uniterm2 has a simple modding mechanism that does not exists in the old one.
   (see modding section below for details)
+- Uniterm2 can launch a shell with privileged permission (administrator)
+  if the user account you logging in permits you to do so. (Added after v0.12)
 
 The features that exists in both Uniterm in Uniterm2:
 - Cross platform pseudo terminal emulator
@@ -67,11 +69,14 @@ Also, if you pass `--show-hidden` together with `--help`, you will find out more
 (which are not very necessary for normal use).
 
 Additionally, you can have full WSL integration if you launch WSL with Uniterm by pass `wsl` as the shell exactly
-like `uniterm [options] [--] wsl [args..]`, and the optional `args` in here is
+like `uniterm [options] [--] wsl [command] [args..]`, and the optional `command` and `args` in here is
 for putting what command should run inside automatically once the WSL bash has been launched.
 Your system's firewall may complain if you first time to launch the WSL with Uniterm,
 as Uniterm needs to seek a free TCP port and open it to localhost for communicate between Windows side and Linux side.
 When it asks for such permission, just allow it or it will not work.
+
+You may also want to launch a shell in administrator mode. Even in Windows platform,
+you may use `sudo` prefix to do so (like `uniterm [options] [--] sudo [shell] [args..]`).
 
 ## Modding
 

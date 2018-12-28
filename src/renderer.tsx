@@ -10,9 +10,8 @@ import { winptyCompatInit } from 'xterm/lib/addons/winptyCompat/winptyCompat';
 import { configFile, events, loadConfig, startWatch } from './config';
 import { TerminalLaunchOptions } from './interfaces';
 import { electron } from './remote-wrapper';
-import { TerminalBase, TerminalOptions } from './terminals/base';
-import { PtyShell } from './terminals/pty';
-import { WslPtyShell } from './terminals/wslpty';
+import { TerminalBase } from './terminals/base';
+import { createBackend } from './terminals/selector';
 
 const addButton = <a className="item" onclick={async () => {
   await loadConfig();
@@ -329,18 +328,6 @@ function attachDisposable(listener: NodeJS.EventEmitter, key: string, callback: 
     listener.removeListener(key, callback);
     callback = null;
   } };
-}
-
-function createBackend(options: TerminalOptions): TerminalBase<unknown> {
-  if(process.platform === 'win32' && options && options.path === 'wsl') {
-    if(options.argv) {
-      options.path = options.argv[0];
-      options.argv = options.argv.slice(1);
-    } else
-      delete options.path;
-    return new WslPtyShell(options);
-  }
-  return new PtyShell(options);
 }
 
 function destroyAllTabs() {

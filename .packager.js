@@ -59,28 +59,5 @@ packager({
         'utf-8'
       );
     }),
-    callbackify(async (buildPath, electronVersion, platform, arch) => {
-      if(platform !== 'win32') return;
-      const path = resolve(buildPath, '../..');
-      console.log('Create helper script for launch in privaged mode (Admin)');
-      // CMD wrapper script: Spawn PowerShell for run uniterm with raised permissions.
-      if(!await existsAsync(path + '/uniterm-su.cmd'))
-        await writeFileAsync(path + '/uniterm-su.cmd',
-          '@echo off\r\npowershell -NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0\\.uniterm-su.ps1" "%*"',
-          'utf-8'
-        );
-      // Powershell wrapper script: Spawn independent PowerShell to prevent StdIO hook from electron.
-      if(!await existsAsync(path + '/uniterm-su.ps1'))
-        await writeFileAsync(path + '/uniterm-su.ps1',
-          'Start-Process -FilePath powershell -ArgumentList "-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File $(Join-Path (Get-Item $MyInvocation.MyCommand.Path).Directory.FullName ".uniterm-su.ps1" -Resolve) `"$args`""',
-          'utf-8'
-        );
-      // Powershell isolated script: actual launcher is in this script.
-      if(!await existsAsync(path + '/.uniterm-su.ps1'))
-        await writeFileAsync(path + '/.uniterm-su.ps1',
-          'Start-Process -FilePath (Join-Path (Get-Item $MyInvocation.MyCommand.Path).Directory.FullName "uniterm.exe" -Resolve) -Verb runAs -ArgumentList "--isolated $args"',
-          'utf-8'
-        );
-    }),
   ],
 });

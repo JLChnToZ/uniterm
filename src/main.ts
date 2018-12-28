@@ -6,6 +6,7 @@ import { register as registerContextMenu } from './default-context-menu';
 import { TerminalLaunchOptions } from './interfaces';
 import { ensureDirectory, existsAsync, isExeAsync, lstatAsync, tryResolvePath } from './pathutils';
 import { register as registerProtocol } from './protocol';
+import { connectToClient } from './terminals/uachost';
 import { packageJson, versionString } from './version';
 
 const windows: { [id: number]: BrowserWindow } = {};
@@ -69,6 +70,7 @@ const args = yargs
       describe: 'Keep 3D API enable even GPU process crashes too frequently. ' +
         'This flag only have effect when the first Uniterm window launches.',
     },
+    'pipe': { hidden: true, string: true },
   })
   .version(versionString)
   .help();
@@ -103,6 +105,8 @@ interface Arguments extends yargs.Arguments {
    * This flag only have effect when the first Uniterm window launches.
    */
   'disable-domain-blocking-for-3d-apis'?: boolean;
+  /** IPC pipe path, for launching the shell with privaged permissions. */
+  pipe?: string;
 }
 
 const argv: Arguments = app.isPackaged ?
@@ -134,7 +138,10 @@ if(argv.config || argv['reset-config'])
     }
     app.quit();
   })(argv['reset-config']);
-else if(!argv.isolated && !app.requestSingleInstanceLock()) {
+else if(argv.pipe) {
+  app.disableHardwareAcceleration();
+  connectToClient(argv.pipe);
+} else if(!argv.isolated && !app.requestSingleInstanceLock()) {
   printFlagNoEffectWarning(argv, 'disable-hardware-acceleration');
   printFlagNoEffectWarning(argv, 'disable-domain-blocking-for-3d-apis');
   app.quit();
