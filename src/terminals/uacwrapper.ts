@@ -19,6 +19,7 @@ function closeServer(this: Server) {
 
 export class UACClient extends TerminalBase<Socket> {
   private rawBuffer?: Buffer;
+  private connected?: boolean;
 
   public constructor(options?: TerminalOptions) {
     super(options);
@@ -30,12 +31,16 @@ export class UACClient extends TerminalBase<Socket> {
   }
 
   public async spawn() {
+    const path = this.path || defaultShell;
+    this.process = `SUDO: ${basename(path)}`;
+    this.resolvedPath = await whichAsync(path);
     // Create a named pipe for IPC between clones.
     const pipe = `uniterm-${process.pid}-${(await randomBytesAsync(16)).toString('hex')}`;
     createServer()
     .listen(joinPath(`\\\\.\\pipe`, pipe))
     .once('connection', this.handleConnection)
     .once('connection', closeServer);
+    this._pushData('SUDO: Waiting to confirm getting administrator privileges...\r\n');
     // Launch a clone with raised privileges via PowerShell.
     // This will triggers UAC prompt if user enables it.
     execFile('powershell', [
@@ -50,9 +55,6 @@ export class UACClient extends TerminalBase<Socket> {
         '-ArgumentList', `"${appPathResolver} --pipe=${pipe}"`,
       ].join(' '),
     ]).once('exit', this.handleSpawnerClose);
-    const path = this.path || defaultShell;
-    this.process = `SUDO: ${basename(path)}`;
-    this.resolvedPath = await whichAsync(path);
   }
 
   public resize(cols: number, rows: number) {
@@ -128,6 +130,10 @@ export class UACClient extends TerminalBase<Socket> {
   private handleResponse(data: Buffer) {
     if(!this.rawBuffer) this.rawBuffer = data;
     else this.rawBuffer = Buffer.concat([this.rawBuffer, data]);
+    if(!this.connected) {
+      this.connected = true;
+      this._pushData('\x1b[2J\x1b[1;1H\x1b[?25h\x1b[0m');
+    }
     let dataSize = 1;
     if(this.rawBuffer.length < dataSize) return;
     while(this.rawBuffer && this.rawBuffer.length >= dataSize) {
@@ -163,10 +169,12 @@ export class UACClient extends TerminalBase<Socket> {
   }
 
   private handleSpawnerClose(code?: number) {
-    if(code && this.pty) {
-      this.pty.end();
-      delete this.pty;
-      this.emit('end');
+    if(code) {
+      if(this.pty) {
+        this.pty.end();
+        delete this.pty;
+      }
+      this.emit('error', new Error('Failed to get administator privileges.'));
     }
   }
 

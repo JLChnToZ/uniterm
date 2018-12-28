@@ -170,6 +170,8 @@ class Tab implements IDisposable {
         this.handleTitleChange(title);
       }),
       attachDisposable(pty, 'data', this.handleDataOutput.bind(this)),
+      attachDisposable(pty, 'error', err =>
+        this.printDisposableMessage(`Oops... error: ${err.message || err}`)),
       attachDisposable(pty, 'end', this.pause ?
         ((code?: number, signal?: number) =>
           this.printDisposableMessage(`\n\nProgram exits with ${code} ${codeToSignal(signal) || ''}`)) :
