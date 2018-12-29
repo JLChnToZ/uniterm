@@ -1,9 +1,12 @@
 import * as defaultShell from 'default-shell';
 import { IPty, spawn } from 'node-pty';
-import { basename } from 'path';
+import { basename, relative } from 'path';
 import * as escape from 'shell-escape';
 import { whichAsync } from '../pathutils';
+import { electron } from '../remote-wrapper';
 import { TerminalBase, TerminalOptions } from './base';
+
+const exePath = electron.app.getPath('exe');
 
 export class PtyShell extends TerminalBase<IPty> {
   get pid() { return this.pty ? this.pty.pid : undefined; }
@@ -17,6 +20,8 @@ export class PtyShell extends TerminalBase<IPty> {
   public async spawn() {
     if(this.pty) return;
     this.resolvedPath = await whichAsync(this.path);
+    if(!relative(exePath, this.resolvedPath))
+      throw new Error('Here I am!');
     this.pty = spawn(this.resolvedPath,
       this.argv || [], {
       name: basename(this.path),
