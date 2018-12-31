@@ -37,7 +37,7 @@ export class UACClient extends TerminalBase<Socket> {
     // Create a named pipe for IPC between clones.
     const pipe = `uniterm-${process.pid}-${(await randomBytesAsync(16)).toString('hex')}`;
     createServer()
-    .listen(joinPath(`\\\\.\\pipe`, pipe))
+    .listen(joinPath('\\\\.\\pipe', pipe))
     .once('connection', this.handleConnection)
     .once('connection', closeServer);
     this._pushData('SUDO: Waiting to confirm getting administrator privileges...\r\n');
@@ -148,7 +148,8 @@ export class UACClient extends TerminalBase<Socket> {
           case CMDType.Error:
             dataSize += buffer.readUInt32BE(1) + 4;
             if(buffer.length < dataSize) return;
-            throw new Error(`Remote error: ${buffer.toString('utf8', 5, dataSize)}`);
+            this.emit('error', new Error(`Remote error: ${buffer.toString('utf8', 5, dataSize)}`));
+            break;
           case CMDType.Exit:
             dataSize += 4;
             if(buffer.length < dataSize) return;
