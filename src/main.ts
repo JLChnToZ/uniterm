@@ -75,7 +75,7 @@ const args = yargs
   .version(versionString)
   .help();
 
-interface Arguments extends yargs.Arguments {
+interface Arguments {
   /** Working directory to start shell. */
   cwd?: string; c?: string;
   /** Add/modify environment variable passed into the shell. */
@@ -109,7 +109,7 @@ interface Arguments extends yargs.Arguments {
   pipe?: string;
 }
 
-const argv: Arguments = app.isPackaged ?
+const argv: yargs.Arguments<Arguments> = app.isPackaged ?
   args.parse(process.argv.slice(1)) :
   args.argv;
 
@@ -229,7 +229,7 @@ function getWindow(newWindow?: boolean) {
   });
 }
 
-async function openShell(lArgv: Arguments, cwd: string) {
+async function openShell(lArgv: yargs.Arguments<Arguments>, cwd: string) {
   // Join env values
   const env: { [key: string]: string } = {};
   if(Array.isArray(lArgv.env) && lArgv.env.length)

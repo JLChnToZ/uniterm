@@ -135,7 +135,6 @@ export class UACClient extends TerminalBase<Socket> {
       this._pushData('\x1b[2J\x1b[1;1H\x1b[?25h\x1b[0m');
     }
     let dataSize = 1;
-    if(this.rawBuffer.length < dataSize) return;
     while(this.rawBuffer && this.rawBuffer.length >= dataSize) {
       const { rawBuffer: buffer } = this;
       const cmd = buffer.readUInt8(0) as CMDType;
@@ -146,21 +145,30 @@ export class UACClient extends TerminalBase<Socket> {
             if(buffer.length < dataSize) return;
             this._pushData(buffer.slice(5, dataSize));
             break;
+          case CMDType.Error:
+            dataSize += buffer.readUInt32BE(1) + 4;
+            if(buffer.length < dataSize) return;
+            throw new Error(`Remote error: ${buffer.toString('utf8', 5, dataSize)}`);
           case CMDType.Exit:
             dataSize += 4;
             if(buffer.length < dataSize) return;
             this.emit('end', buffer.readUInt16BE(1), buffer.readUInt16BE(3));
             throw new Error('Remote dismissed');
-          default: throw new Error('Invalid Code');
+          default: throw new Error(`Invalid Code: ${cmd}`);
         }
-      } catch {
-        this.pty.end();
-        delete this.pty;
+      } catch(error) {
+        console.error(process.platform === 'win32' ? error : (error.message || error));
+        if(this.pty) {
+          this.pty.end();
+          delete this.pty;
+        }
+        return;
       }
       if(buffer.length > dataSize)
         this.rawBuffer = buffer.slice(dataSize);
       else
         this.rawBuffer = undefined;
+      dataSize = 1;
     }
   }
 

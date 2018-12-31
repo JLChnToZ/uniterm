@@ -66,6 +66,7 @@ export function connectToClient(path: string) {
         buffer = buffer.slice(dataSize);
       else
         buffer = undefined;
+      dataSize = 1;
     }
   }
 
@@ -75,8 +76,7 @@ export function connectToClient(path: string) {
       const buf = Buffer.allocUnsafe(5);
       buf.writeUInt8(CMDType.Data, 0);
       buf.writeUInt32BE(data.length, 1);
-      client.write(buf);
-      client.write(data);
+      client.write(Buffer.concat([buf, data]));
     } else {
       const dataLength = Buffer.byteLength(data, encoding);
       const buf = Buffer.allocUnsafe(5 + dataLength);
@@ -98,12 +98,13 @@ export function connectToClient(path: string) {
   }
 
   function handleError(error: Error) {
+    const encoding = host && host.encoding || 'utf8';
     const message = error.message || JSON.stringify(error);
-    const dataLength = Buffer.byteLength(message, 'utf8');
+    const dataLength = Buffer.byteLength(message, encoding);
     const buf = Buffer.allocUnsafe(5 + dataLength);
     buf.writeUInt8(CMDType.Error, 0);
     buf.writeUInt32BE(dataLength, 1);
-    buf.write(message, 5, dataLength, 'utf8');
+    buf.write(message, 5, dataLength, encoding);
     client.write(buf);
   }
 
