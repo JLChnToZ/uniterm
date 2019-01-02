@@ -1,13 +1,14 @@
 import { execFile } from 'child_process';
 import { randomBytes } from 'crypto';
 import * as defaultShell from 'default-shell';
+import { createDecodeStream, createEncodeStream, EncodeStream } from 'msgpack-lite';
 import { createServer, Server, Socket } from 'net';
 import { basename, join as joinPath } from 'path';
 import { promisify } from 'util';
 import { whichAsync } from '../pathutils';
 import { electron } from '../remote-wrapper';
 import { TerminalBase, TerminalOptions } from './base';
-import { CMDType } from './uachost';
+import { CMDData, CMDType } from './uachost';
 
 const appPathResolver = electron.app.isPackaged ? '' : `\`"${electron.app.getAppPath()}\`"`;
 const exePath = electron.app.getPath('exe');
@@ -17,9 +18,8 @@ function closeServer(this: Server) {
   this.close();
 }
 
-export class UACClient extends TerminalBase<Socket> {
-  private rawBuffer?: Buffer;
-  private connected?: boolean;
+export class UACClient extends TerminalBase<EncodeStream> {
+  private flushRequested?: boolean;
 
   public constructor(options?: TerminalOptions) {
     super(options);
@@ -28,6 +28,7 @@ export class UACClient extends TerminalBase<Socket> {
     this.handleError = this.handleError.bind(this);
     this.handleExit = this.handleExit.bind(this);
     this.handleSpawnerClose = this.handleSpawnerClose.bind(this);
+    this.flushEncoder = this.flushEncoder.bind(this);
   }
 
   public async spawn() {
@@ -59,58 +60,39 @@ export class UACClient extends TerminalBase<Socket> {
 
   public resize(cols: number, rows: number) {
     super.resize(cols, rows);
-    if(this.pty) {
-      const buf = Buffer.allocUnsafe(5);
-      buf.writeUInt8(CMDType.Resize, 0);
-      buf.writeUInt16BE(cols || 0, 1);
-      buf.writeUInt16BE(rows || 0, 3);
-      this.pty.write(buf);
-    }
+    if(this.pty)
+      this.writeToRemote(CMDType.Resize, cols || 0, rows || 0);
   }
 
   public _write(chunk: any, encoding: string, callback: (err?: Error) => void) {
     if(!this.pty) return callback(new Error('Process is not yet attached.'));
     try {
-      if(Buffer.isBuffer(chunk)) {
-        const buf = Buffer.allocUnsafe(5);
-        buf.writeUInt8(CMDType.Data, 0);
-        buf.writeUInt32BE(chunk.length, 1);
-        this.pty.write(buf);
-        this.pty.write(chunk);
-      } else if(typeof chunk === 'string') {
-        const dataLength = Buffer.byteLength(chunk, encoding);
-        const buf = Buffer.allocUnsafe(5 + dataLength);
-        buf.writeUInt8(CMDType.Data, 0);
-        buf.writeUInt32BE(dataLength, 1);
-        buf.write(chunk, 5, dataLength, encoding);
-        this.pty.write(buf);
-      } else
-        return callback(new Error('Unknown data type'));
+      this.writeToRemote(CMDType.Data, chunk);
       return callback();
     } catch(err) {
       callback(err);
     }
   }
 
-  public _destroy(err: Error, callback: () => void) {
+  public _destroy(err: Error | null, callback: (err: Error | null) => void) {
     if(this.pty) {
-      const buf = Buffer.allocUnsafe(1);
-      buf.writeUInt8(CMDType.Exit, 0);
-      this.pty.write(buf);
+      this.writeToRemote(CMDType.Exit);
       this.pty.end();
       delete this.pty;
     }
-    callback();
+    callback(null);
   }
 
   private handleConnection(client: Socket) {
     if(this.pty) return;
-    this.pty = client;
     client
-    .on('data', this.handleResponse)
     .on('error', this.handleError)
-    .on('end', this.handleExit);
-    const optionsStr = JSON.stringify({
+    .on('close', this.handleExit)
+    .pipe(createDecodeStream())
+    .on('data', this.handleResponse);
+    this.pty = createEncodeStream();
+    this.pty.pipe(client);
+    this.writeToRemote(CMDType.Spawn, {
       path: this.path,
       argv: this.argv,
       cwd: this.cwd,
@@ -118,58 +100,30 @@ export class UACClient extends TerminalBase<Socket> {
       cols: this.cols,
       rows: this.rows,
       encoding: this.encoding,
-    } as TerminalOptions);
-    const dataLength = Buffer.byteLength(optionsStr, 'utf8');
-    const buf = Buffer.allocUnsafe(dataLength + 5);
-    buf.writeUInt8(CMDType.Spawn, 0);
-    buf.writeUInt32BE(dataLength, 1);
-    buf.write(optionsStr, 5, dataLength, 'utf8');
-    client.write(buf);
+    });
+    this._pushData('\x1b[2J\x1b[1;1H\x1b[?25h\x1b[0m');
   }
 
-  private handleResponse(data: Buffer) {
-    if(!this.rawBuffer) this.rawBuffer = data;
-    else this.rawBuffer = Buffer.concat([this.rawBuffer, data]);
-    if(!this.connected) {
-      this.connected = true;
-      this._pushData('\x1b[2J\x1b[1;1H\x1b[?25h\x1b[0m');
-    }
-    let dataSize = 1;
-    while(this.rawBuffer && this.rawBuffer.length >= dataSize) {
-      const { rawBuffer: buffer } = this;
-      const cmd = buffer.readUInt8(0) as CMDType;
-      try {
-        switch(cmd) {
-          case CMDType.Data:
-            dataSize += buffer.readUInt32BE(1) + 4;
-            if(buffer.length < dataSize) return;
-            this._pushData(buffer.slice(5, dataSize));
-            break;
-          case CMDType.Error:
-            dataSize += buffer.readUInt32BE(1) + 4;
-            if(buffer.length < dataSize) return;
-            this.emit('error', new Error(`Remote error: ${buffer.toString('utf8', 5, dataSize)}`));
-            break;
-          case CMDType.Exit:
-            dataSize += 4;
-            if(buffer.length < dataSize) return;
-            this.emit('end', buffer.readUInt16BE(1), buffer.readUInt16BE(3));
-            throw new Error('Remote dismissed');
-          default: throw new Error(`Invalid Code: ${cmd}`);
-        }
-      } catch(error) {
-        console.error(process.platform === 'win32' ? error : (error.message || error));
-        if(this.pty) {
-          this.pty.end();
-          delete this.pty;
-        }
-        return;
+  private handleResponse(data: CMDData) {
+    try {
+      switch(data[0]) {
+        case CMDType.Data:
+          this._pushData(data[1]);
+          break;
+        case CMDType.Error:
+          this.emit('error', new Error(`Remote error: ${data[1]}`));
+          break;
+        case CMDType.Exit:
+          this.emit('end', data[1], data[2]);
+          throw new Error('Remote dismissed');
+        default: throw new Error(`Invalid Code: ${data[0]}`);
       }
-      if(buffer.length > dataSize)
-        this.rawBuffer = buffer.slice(dataSize);
-      else
-        this.rawBuffer = undefined;
-      dataSize = 1;
+    } catch(error) {
+      console.error(process.type === 'renderer' ? error : (error.message || error));
+      if(this.pty) {
+        this.pty.end();
+        delete this.pty;
+      }
     }
   }
 
@@ -189,5 +143,19 @@ export class UACClient extends TerminalBase<Socket> {
 
   private handleExit() {
     delete this.pty;
+  }
+
+  private writeToRemote(...data: CMDData) {
+    if(!this.pty) return;
+    this.pty.write(data);
+    if(this.flushRequested) return;
+    this.flushRequested = true;
+    process.nextTick(this.flushEncoder);
+  }
+
+  private flushEncoder() {
+    if(!this.pty) return;
+    this.pty.encoder.flush();
+    this.flushRequested = false;
   }
 }

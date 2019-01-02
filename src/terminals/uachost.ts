@@ -1,116 +1,100 @@
+import { createDecodeStream, createEncodeStream } from 'msgpack-lite';
 import { connect as connectServer } from 'net';
 import { join as joinPath } from 'path';
+import { TerminalLaunchOptions } from '../interfaces';
 import { TerminalBase } from './base';
 import { createBackend } from './selector';
 
 export const enum CMDType {
   Data = 0x01,
   Resize = 0x02,
-  Spawn = 0x80,
-  Error = 0xFE,
-  Exit = 0xFF,
+  Spawn = 0x03,
+  Error = 0x7E,
+  Exit = 0x7F,
 }
 
+export type CMDData =
+  [CMDType.Data, any] |
+  [CMDType.Resize, number, number] |
+  [CMDType.Spawn, TerminalLaunchOptions] |
+  [CMDType.Error, string] |
+  [CMDType.Exit, number, number] |
+  [CMDType, ...any[]];
+
 export function connectToClient(path: string) {
-  let buffer: Buffer | undefined;
   let host: TerminalBase<unknown> | undefined;
+  let flushRequested = false;
   const client = connectServer(joinPath('\\\\.\\pipe', path));
   client
-  .on('data', handleRequest)
+  .on('error', handleRemoteClose)
   .on('close', handleRemoteClose)
-  .on('error', handleRemoteClose);
+  .pipe(createDecodeStream())
+  .on('data', handleRequest);
+  const writer = createEncodeStream();
+  writer.pipe(client);
 
-  function handleRequest(data: Buffer) {
-    if(!buffer) buffer = data;
-    else buffer = Buffer.concat([buffer, data]);
-    let dataSize = 1;
-    while(buffer && buffer.length >= dataSize) {
-      const cmd: CMDType = buffer.readUInt8(0);
-      try {
-        switch(cmd) {
-          case CMDType.Spawn:
-            dataSize += buffer.readUInt32BE(1) + 4;
-            if(buffer.length < dataSize) return;
-            if(host) throw new Error('Host is already spawned.');
-            host = createBackend(JSON.parse(buffer.slice(5, dataSize).toString('utf8')));
-            host
-            .on('data', handleResponse)
-            .on('end', handleClose)
-            .on('error', handleError)
-            .spawn();
-            break;
-          case CMDType.Data:
-            dataSize += buffer.readUInt32BE(1) + 4;
-            if(buffer.length < dataSize) return;
-            if(!host) throw new Error('Host is not spawned.');
-            host.write(buffer.slice(5, dataSize));
-            break;
-          case CMDType.Resize:
-            dataSize += 4;
-            if(buffer.length < dataSize) return;
-            if(!host) throw new Error('Host is not spawned.');
-            host.resize(buffer.readUInt16BE(1), buffer.readUInt16BE(3));
-            break;
-          case CMDType.Exit:
-            if(!host) throw new Error('Host is not spawned.');
-            host.end();
-            host = undefined;
-            throw new Error('Host closed.');
-          default: throw new Error('Invalid code');
-        }
-      } catch {
-        client.end();
-        process.exit();
+  function handleRequest(data: CMDData) {
+    try {
+      switch(data[0]) {
+        case CMDType.Spawn:
+          if(host) throw new Error('Host is already spawned.');
+          host = createBackend(data[1]);
+          host
+          .on('data', handleResponse)
+          .on('end', handleClose)
+          .on('error', handleError)
+          .spawn();
+          break;
+        case CMDType.Data:
+          if(!host) throw new Error('Host is not spawned.');
+          host.write(data[1]);
+          break;
+        case CMDType.Resize:
+          if(!host) throw new Error('Host is not spawned.');
+          host.resize(data[1], data[2]);
+          break;
+        case CMDType.Exit:
+          if(!host) throw new Error('Host is not spawned.');
+          host.end();
+          host = undefined;
+          throw new Error('Host closed.');
+        default: throw new Error('Invalid code');
       }
-      if(buffer.length > dataSize)
-        buffer = buffer.slice(dataSize);
-      else
-        buffer = undefined;
-      dataSize = 1;
+    } catch {
+      client.end();
+      process.exit();
     }
   }
 
   function handleResponse(data: string | Buffer) {
-    const encoding = host && host.encoding || 'utf8';
-    if(Buffer.isBuffer(data)) {
-      const buf = Buffer.allocUnsafe(5);
-      buf.writeUInt8(CMDType.Data, 0);
-      buf.writeUInt32BE(data.length, 1);
-      client.write(Buffer.concat([buf, data]));
-    } else {
-      const dataLength = Buffer.byteLength(data, encoding);
-      const buf = Buffer.allocUnsafe(5 + dataLength);
-      buf.writeUInt8(CMDType.Data, 0);
-      buf.writeUInt32BE(dataLength, 1);
-      buf.write(data, 5, dataLength, encoding);
-      client.write(buf);
-    }
+    writeAndFlush(CMDType.Data, data);
   }
 
   function handleClose(code?: number, signal?: number) {
-    const buf = Buffer.allocUnsafe(5);
-    buf.writeUInt8(CMDType.Exit, 0);
-    buf.writeUInt16BE(code || 0, 1);
-    buf.writeUInt16BE(signal || 0, 3);
-    client.write(buf);
+    writeAndFlush(CMDType.Exit, code || 0, signal || 0);
     client.end();
     process.exit();
   }
 
   function handleError(error: Error) {
-    const encoding = host && host.encoding || 'utf8';
-    const message = error.message || JSON.stringify(error);
-    const dataLength = Buffer.byteLength(message, encoding);
-    const buf = Buffer.allocUnsafe(5 + dataLength);
-    buf.writeUInt8(CMDType.Error, 0);
-    buf.writeUInt32BE(dataLength, 1);
-    buf.write(message, 5, dataLength, encoding);
-    client.write(buf);
+    writeAndFlush(CMDType.Error, error.message);
   }
 
   function handleRemoteClose() {
     if(host) host.end();
     host = undefined;
     process.exit();
+  }
+
+  function writeAndFlush(...data: CMDData) {
+    writer.write(data);
+    if(flushRequested) return;
+    flushRequested = true;
+    process.nextTick(flush);
+  }
+
+  function flush() {
+    writer.encoder.flush();
+    flushRequested = false;
   }
 }

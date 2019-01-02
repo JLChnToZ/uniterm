@@ -90,10 +90,10 @@ export class WslPtyShell extends TerminalBase<IPty> {
     }
   }
 
-  public _destroy(err: Error, callback: () => void) {
+  public _destroy(err: Error | null, callback: (err: Error | null) => void) {
     if(this.pty)
       this.pty.kill();
-    callback();
+    callback(null);
   }
 
   public async dropFiles(files: string[]) {
