@@ -25,7 +25,6 @@ export class UACClient extends TerminalBase<EncodeStream> {
     super(options);
     this.handleConnection = this.handleConnection.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
-    this.handleError = this.handleError.bind(this);
     this.handleExit = this.handleExit.bind(this);
     this.handleSpawnerClose = this.handleSpawnerClose.bind(this);
     this.flushEncoder = this.flushEncoder.bind(this);
@@ -75,19 +74,15 @@ export class UACClient extends TerminalBase<EncodeStream> {
   }
 
   public _destroy(err: Error | null, callback: (err: Error | null) => void) {
-    if(this.pty) {
+    if(this.pty)
       this.writeToRemote(CMDType.Exit);
-      this.pty.end();
-      delete this.pty;
-    }
     callback(null);
   }
 
   private handleConnection(client: Socket) {
     if(this.pty) return;
     client
-    .on('error', this.handleError)
-    .on('close', this.handleExit)
+    .on('end', this.handleExit)
     .pipe(createDecodeStream())
     .on('data', this.handleResponse);
     this.pty = createEncodeStream();
@@ -115,7 +110,8 @@ export class UACClient extends TerminalBase<EncodeStream> {
           break;
         case CMDType.Exit:
           this.emit('end', data[1], data[2]);
-          throw new Error('Remote dismissed');
+          if(this.pty) this.pty.end();
+          break;
         default: throw new Error(`Invalid Code: ${data[0]}`);
       }
     } catch(error) {
@@ -125,10 +121,6 @@ export class UACClient extends TerminalBase<EncodeStream> {
         delete this.pty;
       }
     }
-  }
-
-  private handleError(error?: Error) {
-    this.emit('error', error);
   }
 
   private handleSpawnerClose(code?: number) {

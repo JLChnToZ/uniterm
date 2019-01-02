@@ -26,8 +26,7 @@ export function connectToClient(path: string) {
   let flushRequested = false;
   const client = connectServer(joinPath('\\\\.\\pipe', path));
   client
-  .on('error', handleRemoteClose)
-  .on('close', handleRemoteClose)
+  .on('end', handleRemoteClose)
   .pipe(createDecodeStream())
   .on('data', handleRequest);
   const writer = createEncodeStream();
@@ -55,14 +54,12 @@ export function connectToClient(path: string) {
           break;
         case CMDType.Exit:
           if(!host) throw new Error('Host is not spawned.');
-          host.end();
-          host = undefined;
-          throw new Error('Host closed.');
+          host.destroy();
+          break;
         default: throw new Error('Invalid code');
       }
     } catch {
-      client.end();
-      process.exit();
+      client.destroy();
     }
   }
 
@@ -71,9 +68,8 @@ export function connectToClient(path: string) {
   }
 
   function handleClose(code?: number, signal?: number) {
+    if(host) host = undefined;
     writeAndFlush(CMDType.Exit, code || 0, signal || 0);
-    client.end();
-    process.exit();
   }
 
   function handleError(error: Error) {
@@ -81,8 +77,7 @@ export function connectToClient(path: string) {
   }
 
   function handleRemoteClose() {
-    if(host) host.end();
-    host = undefined;
+    if(host) host.destroy();
     process.exit();
   }
 
