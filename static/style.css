@@ -61,10 +61,6 @@ body::after {
   height: 100%;
 }
 
-.layout-container>* {
-  width: 100%;
-}
-
 .header {
   display: flex;
   flex-direction: row;
