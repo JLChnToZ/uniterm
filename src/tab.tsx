@@ -136,7 +136,6 @@ export class Tab implements IDisposable {
   public onEnable() {
     this.tabElement.classList.add('active');
     this.tabContent.classList.remove('inactive');
-    fit(this.terminal);
     this.terminal.focus();
     this.active = true;
     Tab.activeTab = this;
@@ -144,7 +143,7 @@ export class Tab implements IDisposable {
     for(const tab of Tab.tabs)
       if(tab && tab !== this)
         tab.handleDisable();
-    setTimeout(fit, 100, this.terminal);
+    fit(this.terminal);
   }
 
   public dispose() {
