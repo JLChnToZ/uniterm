@@ -149,11 +149,6 @@ export class Tab implements IDisposable {
   public dispose() {
     window.dispatchEvent(new CustomEvent('tabdispose', { detail: this }));
     Tab.tabs.delete(this);
-    if(Tab.activeTab === this) {
-      Tab.activeTab = [...Tab.tabs][0];
-      if(Tab.activeTab)
-        Tab.activeTab.onEnable();
-    }
     if(this.pty) {
       this.pty.destroy();
       delete this.pty;
@@ -171,7 +166,15 @@ export class Tab implements IDisposable {
       this.tabElement.remove();
       delete this.tabElement;
     }
-    if(!Tab.tabs.size) window.close();
+    if(!Tab.tabs.size) {
+      window.close();
+      return;
+    }
+    if(Tab.activeTab === this) {
+      Tab.activeTab = Tab.tabs.values().next().value;
+      if(Tab.activeTab)
+        Tab.activeTab.onEnable();
+    }
   }
 
   private handleDisable() {
