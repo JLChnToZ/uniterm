@@ -99,13 +99,8 @@ body::after {
   mix-blend-mode: exclusion;
 }
 
-.active>.icon {
-  mix-blend-mode: normal;
-}
-
 .close.icon:hover {
   color: #F00;
-  mix-blend-mode: normal;
 }
 
 .item {
@@ -114,6 +109,11 @@ body::after {
   padding: 0.5em;
   mix-blend-mode: exclusion;
   cursor: pointer;
+}
+
+.item>* {
+  mix-blend-mode: normal;
+  transition-duration: 0s;
 }
 
 .item:hover, .item:active, .active.item {
@@ -129,11 +129,11 @@ body::after {
   background-color: #FFF;
 }
 
-.item:hover, .item:active {
-  border-radius: 1em;
+.item:active {
+  border-radius: 2em;
 }
 
-.active.item, .active.item:hover, .active.item:active {
+.active.item, .active.item:active {
   border-radius: 0;
   border-top-left-radius: .5em;
   border-top-right-radius: .5em;
@@ -141,6 +141,7 @@ body::after {
 
 .icon.item {
   width: 1em;
+  min-width: 1em;
   text-align: center;
 }
 
