@@ -3973,10 +3973,6 @@ to-fast-properties@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/to-fast-properties/-/to-fast-properties-1.0.3.tgz#b83571fa4d8c25b82e231b06e3a3055de4ca1a47"
 
-tocas-ui@^2.3.2:
-  version "2.3.2"
-  resolved "https://registry.yarnpkg.com/tocas-ui/-/tocas-ui-2.3.2.tgz#bf05d809acee765eadf5447d4a318d23049f6782"
-
 touch@0.0.3:
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/touch/-/touch-0.0.3.tgz#51aef3d449571d4f287a5d87c9c8b49181a0db1d"
