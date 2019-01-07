@@ -11,14 +11,6 @@ import { getAsStringAsync, interceptEvent } from './domutils';
 import { ctrlKey } from './key-detector';
 import { TerminalBase } from './terminals/base';
 
-let tabContainer: HTMLElement;
-let contentContainer: HTMLElement;
-
-export function setContainers(newTabContainer: HTMLElement, newContentContainer: HTMLElement) {
-  tabContainer = newTabContainer;
-  contentContainer = newContentContainer;
-}
-
 export class Tab implements IDisposable {
   public static get tabCount() {
     return this.tabs.size;
@@ -26,17 +18,35 @@ export class Tab implements IDisposable {
   public static activeTab: Tab;
 
   public static destroyAllTabs() {
-    for(const tab of this.tabs)
+    for(const tab of this.tabs.values())
       if(tab) tab.dispose();
   }
+
   public static allTabs() {
-    return this.tabs[Symbol.iterator]();
+    return this.tabs.values();
   }
+
+  private static tabs = new Map<HTMLElement, Tab>();
+
+  private static handleTabClick(this: HTMLElement, e: MouseEvent) {
+    const tab = Tab.tabs.get(this);
+    if(!tab) return;
+    interceptEvent(e);
+    tab.onEnable();
+  }
+
+  private static handleTabMouseUp(this: HTMLElement, e: MouseEvent) {
+    const tab = Tab.tabs.get(this);
+    if(!tab || e.button !== 1) return;
+    interceptEvent(e);
+    tab.dispose();
+  }
+
   private get processTitle() {
     const proc = this.pty && this.pty.process;
     return proc && proc.trim() || '';
   }
-  private static tabs = new Set<Tab>();
+
   public terminal: Terminal;
   public pty: TerminalBase<unknown>;
   public disposables: IDisposable[];
@@ -49,11 +59,11 @@ export class Tab implements IDisposable {
   public pause?: boolean;
   private explicitTitle?: boolean;
 
-  constructor(pause?: boolean) {
+  constructor(tabContainer: HTMLElement, contentContainer: HTMLElement, pause?: boolean) {
     this.defaultTitle = 'Shell';
     this.pause = pause;
     this.terminal = new Terminal(configFile && configFile.terminal || {
-      fontFamily: 'powerlinesymbols, monospace',
+      fontFamily: 'mononoki, monospace',
       cursorBlink: true,
     });
     webLinksInit(this.terminal, (e, uri) => ctrlKey && shell.openExternal(uri), {
@@ -63,10 +73,9 @@ export class Tab implements IDisposable {
     winptyCompatInit(this.terminal);
     this.disposables = [];
     this.active = true;
-    tabContainer.appendChild(this.tabElement = <a className="item" onclick={e => {
-      interceptEvent(e);
-      this.onEnable();
-    }}>
+    tabContainer.appendChild(this.tabElement = <a className="item"
+      onclick={Tab.handleTabClick}
+      onmouseup={Tab.handleTabMouseUp}>
       <span className="icon">{'\uf120'}</span>
       {this.tabContentText = <span className="title-text" /> as HTMLElement}
       <a className="close icon" onclick={e => {
@@ -83,7 +92,7 @@ export class Tab implements IDisposable {
     contentContainer.appendChild(this.tabContent);
     this.terminal.open(this.tabContent);
     this.onEnable();
-    Tab.tabs.add(this);
+    Tab.tabs.set(this.tabElement, this);
     window.dispatchEvent(new CustomEvent('newtab', { detail: this }));
   }
 
@@ -140,15 +149,22 @@ export class Tab implements IDisposable {
     this.active = true;
     Tab.activeTab = this;
     setTitle(this.title);
-    for(const tab of Tab.tabs)
-      if(tab && tab !== this)
-        tab.handleDisable();
+    const { parentElement } = this.tabElement;
+    if(parentElement) {
+      const { children } = parentElement;
+      // tslint:disable-next-line:prefer-for-of
+      for(let i = 0; i < children.length; i++) {
+        if(children[i] === this.tabElement) continue;
+        const tab = Tab.tabs.get(children[i] as HTMLElement);
+        if(tab) tab.handleDisable();
+      }
+    }
     fit(this.terminal);
   }
 
   public dispose() {
     window.dispatchEvent(new CustomEvent('tabdispose', { detail: this }));
-    Tab.tabs.delete(this);
+    Tab.tabs.delete(this.tabElement);
     if(this.pty) {
       this.pty.destroy();
       delete this.pty;
@@ -162,7 +178,9 @@ export class Tab implements IDisposable {
       this.tabContent.remove();
       delete this.tabContent;
     }
+    let tabElementParent: HTMLElement | undefined;
     if(this.tabElement) {
+      tabElementParent = this.tabElement.parentElement;
       this.tabElement.remove();
       delete this.tabElement;
     }
@@ -170,11 +188,22 @@ export class Tab implements IDisposable {
       window.close();
       return;
     }
-    if(Tab.activeTab === this) {
-      Tab.activeTab = Tab.tabs.values().next().value;
-      if(Tab.activeTab)
-        Tab.activeTab.onEnable();
+    if(!this.active) return;
+    if(tabElementParent) {
+      const { children } = tabElementParent;
+      // tslint:disable-next-line:prefer-for-of
+      for(let i = 0; i < children.length; i++) {
+        const tab = Tab.tabs.get(children[i] as HTMLElement);
+        if(tab) {
+          Tab.activeTab = tab;
+          tab.onEnable();
+          return;
+        }
+      }
     }
+    Tab.activeTab = Tab.tabs.values().next().value;
+    if(Tab.activeTab)
+      Tab.activeTab.onEnable();
   }
 
   private handleDisable() {
@@ -244,6 +273,7 @@ export class Tab implements IDisposable {
     this.pty.dropFiles(result);
   }
 }
+
 
 const originalTitle = document.title;
 function setTitle(title?: string) {

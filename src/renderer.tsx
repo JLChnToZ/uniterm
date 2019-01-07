@@ -7,34 +7,28 @@ import { configFile, events, loadConfig, startWatch } from './config';
 import { interceptDrop, loadScript } from './domutils';
 import { TerminalLaunchOptions } from './interfaces';
 import { electron } from './remote-wrapper';
-import { setContainers, Tab } from './tab';
+import { Tab } from './tab';
 import { createBackend } from './terminals/selector';
 import { attach as attachWinCtrl } from './winctrl';
 
 const tabContainer = <div className="flex" /> as HTMLDivElement;
-
-const header = <div className="header pty-tabs">
+const layoutContainer = document.body.appendChild(<div className="layout-container" /> as HTMLDivElement);
+const header = layoutContainer.appendChild(<div className="header pty-tabs">
   {tabContainer}
   <a className="icon item" onclick={async () => {
     await loadConfig();
-    new Tab().attach(createBackend({
+    new Tab(tabContainer, layoutContainer).attach(createBackend({
       cwd: remote.app.getPath('home'),
     }));
   }} title="Add Tab">{'\uf914'}</a>
   <div className="drag" />
   <a className="icon item" onclick={() => ipcRenderer.send('show-config')} title="Config">{'\uf085'}</a>
-</div> as HTMLDivElement;
+</div> as HTMLDivElement);
 
 if(process.platform === 'darwin')
   header.insertBefore(<div className="window-control-mac" />, header.firstElementChild);
 else
   attachWinCtrl(header);
-
-const layoutContainer = document.body.appendChild(<div className="layout-container">
-  {header}
-</div> as HTMLDivElement);
-
-setContainers(tabContainer, layoutContainer);
 
 events.on('config', () => {
   window.dispatchEvent(new CustomEvent('configreload', {}));
@@ -71,7 +65,7 @@ events.on('config', () => {
 
 ipcRenderer.on('create-terminal', async (e: IpcMessageEvent, options: TerminalLaunchOptions) => {
   await loadConfig();
-  const tab = new Tab(options.pause);
+  const tab = new Tab(tabContainer, layoutContainer, options.pause);
   tab.attach(createBackend(options));
   remote.getCurrentWindow().focus();
 });
