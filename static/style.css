@@ -147,7 +147,7 @@ body::after {
 .flex>.item {
   display: flex;
   flex: auto;
-  min-width: 6em;
+  min-width: 8em;
   max-width: 100%;
 }
 
@@ -196,7 +196,13 @@ img[src^='fileicon://'] {
   border-radius: 1em;
 }
 
-:hover ::-webkit-scrollbar-thumb, :active ::-webkit-scrollbar-thumb {
+:focus::-webkit-scrollbar-thumb,
+:focus>::-webkit-scrollbar-thumb,
+:hover::-webkit-scrollbar-thumb,
+:hover>::-webkit-scrollbar-thumb,
+:active::-webkit-scrollbar-thumb,
+:active>::-webkit-scrollbar-thumb,
+.focus ::-webkit-scrollbar-thumb {
 	background-color: rgba(128,128,128,0.5);
 }
 
