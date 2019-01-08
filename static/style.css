@@ -88,7 +88,7 @@ body::after {
 }
 
 .icon, .item {
-  transition-property: background-color, color, border-radius;
+  transition-property: background-color, color, border-radius, border-color;
   transition-duration: 0.25s;
 }
 
@@ -107,16 +107,28 @@ body::after {
   background-color: transparent;
   color: #FFF;
   padding: 0.5em;
-  mix-blend-mode: exclusion;
   cursor: pointer;
+  border-bottom: 0.15em solid transparent;
+}
+
+.icon.item {
+  mix-blend-mode: exclusion;
+}
+
+.icon.item:hover, .icon.item:active {
+  mix-blend-mode: normal;
+  color: #000;
 }
 
 .item>* {
-  mix-blend-mode: normal;
-  transition-duration: 0s;
+  mix-blend-mode: exclusion;
 }
 
-.item:hover, .item:active, .active.item {
+.item>img {
+  mix-blend-mode: normal;
+}
+
+.item:hover>*, .item:active>* {
   color: #000;
   mix-blend-mode: normal;
 }
@@ -125,18 +137,14 @@ body::after {
   background-color: rgba(255,255,255,0.5);
 }
 
-.item:active, .active.item {
-  background-color: #FFF;
-}
-
 .item:active {
+  background-color: #FFF;
   border-radius: 2em;
 }
 
 .active.item, .active.item:active {
   border-radius: 0;
-  border-top-left-radius: .5em;
-  border-top-right-radius: .5em;
+  border-bottom-color: rgba(255,255,255,0.75);
 }
 
 .icon.item {
