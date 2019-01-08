@@ -84,11 +84,12 @@ body::after {
 
 .window-controls-mac {
   flex: none;
+  min-width: 80px;
   width: 80px;
 }
 
-.icon, .item {
-  transition-property: background-color, color, border-radius, border-color;
+.icon, .item, .item::before {
+  transition-property: background-color, color, border-radius, border-color, transform;
   transition-duration: 0.25s;
 }
 
@@ -108,16 +109,22 @@ body::after {
   color: #FFF;
   padding: 0.5em;
   cursor: pointer;
+  position: relative;
+}
+
+.item::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: scale(0, 1);
   border-bottom: 0.15em solid transparent;
+  mix-blend-mode: exclusion;
 }
 
 .icon.item {
   mix-blend-mode: exclusion;
-}
-
-.icon.item:hover, .icon.item:active {
-  mix-blend-mode: normal;
-  color: #000;
 }
 
 .item>* {
@@ -128,6 +135,7 @@ body::after {
   mix-blend-mode: normal;
 }
 
+.icon.item:hover, .icon.item:active,
 .item:hover>*, .item:active>* {
   color: #000;
   mix-blend-mode: normal;
@@ -144,6 +152,10 @@ body::after {
 
 .active.item, .active.item:active {
   border-radius: 0;
+}
+
+.active.item::before {
+  transform: scale(1, 1);
   border-bottom-color: rgba(255,255,255,0.75);
 }
 
