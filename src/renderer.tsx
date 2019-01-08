@@ -4,12 +4,16 @@ import { resolve as resolvePath } from 'url';
 import { ITerminalOptions } from 'xterm';
 import { fit } from 'xterm/lib/addons/fit/fit';
 import { configFile, events, loadConfig, startWatch } from './config';
-import { interceptDrop, loadScript } from './domutils';
+import { interceptDrop, interceptEvent, loadScript } from './domutils';
 import { TerminalLaunchOptions } from './interfaces';
+import { existsAsync, isExeAsync, lstatAsync } from './pathutils';
 import { electron } from './remote-wrapper';
 import { Tab } from './tab';
+import { TerminalBase } from './terminals/base';
 import { createBackend } from './terminals/selector';
 import { attach as attachWinCtrl } from './winctrl';
+
+const homePath = remote.app.getPath('home');
 
 const tabContainer = <div className="flex" /> as HTMLDivElement;
 const layoutContainer = document.body.appendChild(<div className="layout-container" /> as HTMLDivElement);
@@ -18,12 +22,57 @@ const header = layoutContainer.appendChild(<div className="header pty-tabs">
   <a className="icon item" onclick={async () => {
     await loadConfig();
     new Tab(tabContainer, layoutContainer).attach(createBackend({
-      cwd: remote.app.getPath('home'),
+      cwd: homePath,
     }));
+  }} ondragenter={acceptFileDrop} ondragover={acceptFileDrop} ondrop={async e => {
+    interceptEvent(e);
+    const { items } = e.dataTransfer;
+    if(items && items.length) {
+      // tslint:disable-next-line:prefer-for-of
+      for(let i = 0; i < items.length; i++) {
+        const item = items[i];
+        let backend: TerminalBase<unknown> | undefined;
+        switch(item.kind) {
+          case 'file': {
+            const path = item.getAsFile().path;
+            if(!await existsAsync(path))
+              break;
+            if((await lstatAsync(path)).isDirectory()) {
+              backend = createBackend({
+                cwd: path,
+              });
+              break;
+            }
+            if(await isExeAsync(path))
+              backend = createBackend({
+                path,
+                cwd: homePath,
+              });
+            break;
+          }
+        }
+        if(backend)
+          new Tab(tabContainer, layoutContainer).attach(backend);
+      }
+      items.clear();
+    }
+    e.dataTransfer.clearData();
   }} title="Add Tab">{'\uf914'}</a>
   <div className="drag" />
   <a className="icon item" onclick={() => ipcRenderer.send('show-config')} title="Config">{'\uf085'}</a>
 </div> as HTMLDivElement);
+
+function acceptFileDrop(e: DragEvent) {
+  interceptEvent(e);
+  const { dataTransfer } = e;
+  for(const type of dataTransfer.types)
+    switch(type) {
+      case 'Files':
+        dataTransfer.dropEffect = 'link';
+        return;
+    }
+  dataTransfer.dropEffect = 'none';
+}
 
 if(process.platform === 'darwin')
   header.insertBefore(<div className="window-control-mac" />, header.firstElementChild);
