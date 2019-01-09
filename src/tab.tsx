@@ -35,14 +35,14 @@ export class Tab implements IDisposable {
   private static handleTabClick(this: HTMLElement, e: MouseEvent) {
     const tab = Tab.tabs.get(this);
     if(!tab) return;
-    interceptEvent(e);
+    e.preventDefault();
     tab.onEnable();
   }
 
   private static handleTabMouseUp(this: HTMLElement, e: MouseEvent) {
     const tab = Tab.tabs.get(this);
     if(!tab || e.button !== 1) return;
-    interceptEvent(e);
+    e.preventDefault();
     tab.dispose();
   }
 
@@ -83,7 +83,7 @@ export class Tab implements IDisposable {
       <span className="icon">{'\uf120'}</span>
       {this.tabContentText = <span className="title-text" /> as HTMLElement}
       <a className="close icon" onclick={e => {
-        interceptEvent(e);
+        e.preventDefault();
         this.dispose();
       }} title="Close Tab">{'\uf655'}</a>
     </a> as HTMLElement);

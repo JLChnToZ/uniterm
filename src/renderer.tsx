@@ -12,6 +12,7 @@ import { Tab } from './tab';
 import { TerminalBase } from './terminals/base';
 import { createBackend } from './terminals/selector';
 import { attach as attachWinCtrl } from './winctrl';
+import { startDetect as detectZoomGesture } from './zoom-gesture-detector';
 
 const homePath = remote.app.getPath('home');
 
@@ -130,14 +131,33 @@ window.addEventListener('beforeunload', e => {
   })) e.returnValue = false;
 });
 
-document.body.addEventListener('dragenter', interceptDrop);
-document.body.addEventListener('dragover', interceptDrop);
-document.body.addEventListener('wheel', e => {
+const { body } = document;
+
+body.addEventListener('dragenter', interceptDrop);
+body.addEventListener('dragover', interceptDrop);
+body.addEventListener('wheel', e => {
   if(!e.ctrlKey || !(e.target as Element).matches('.pty-container *'))
     return;
   interceptEvent(e);
+  handleZoom(e.deltaZ || e.deltaY);
+}, true);
+
+let gestureZoom = 0;
+const gestureZoomTheshold = 10;
+detectZoomGesture(body, d => {
+  gestureZoom += d;
+  while(gestureZoom > gestureZoomTheshold) {
+    handleZoom(gestureZoom);
+    gestureZoom -= gestureZoomTheshold;
+  }
+  while(gestureZoom < -gestureZoomTheshold) {
+    handleZoom(gestureZoom);
+    gestureZoom += gestureZoomTheshold;
+  }
+}, true);
+
+function handleZoom(delta: number) {
   const options = configFile && configFile.terminal || {};
-  const delta = e.deltaZ || e.deltaY;
   if(!options.fontSize)
     options.fontSize = 12;
   else if(delta > 0 && options.fontSize > 1)
@@ -146,7 +166,7 @@ document.body.addEventListener('wheel', e => {
     options.fontSize++;
   else return;
   reloadTerminalConfig(options);
-}, true);
+}
 
 if(document.readyState !== 'complete')
   document.addEventListener('readystatechange', () => {
