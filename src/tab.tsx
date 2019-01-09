@@ -26,6 +26,10 @@ export class Tab implements IDisposable {
     return this.tabs.values();
   }
 
+  public static find(tabHeader: HTMLElement) {
+    return this.tabs.get(tabHeader);
+  }
+
   private static tabs = new Map<HTMLElement, Tab>();
 
   private static handleTabClick(this: HTMLElement, e: MouseEvent) {

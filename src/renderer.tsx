@@ -82,35 +82,37 @@ else
 events.on('config', () => {
   window.dispatchEvent(new CustomEvent('configreload', {}));
   if(!configFile) return;
-  if(configFile.terminal) {
-    const { terminal: options } = configFile;
-    if(Tab.tabCount) {
-      const keys = Object.keys(options) as Array<keyof ITerminalOptions>;
-      for(const tab of Tab.allTabs()) {
-        if(!tab.terminal) continue;
-        const { terminal } = tab;
-        for(const key of keys) {
-          const value = options[key];
-          if(terminal.getOption(key) !== value)
-            terminal.setOption(key, value);
-        }
-        fit(terminal);
-      }
-    }
-    const { style } = document.body;
-    if(options.theme) {
-      const { theme } = options;
-      style.backgroundColor = theme.background || 'inherit';
-      style.color = theme.foreground || 'inherit';
-    } else {
-      style.backgroundColor = 'inherit';
-      style.color = 'inherit';
-    }
-  }
+  if(configFile.terminal)
+    reloadTerminalConfig(configFile.terminal);
   if(configFile.mods && configFile.mods.length)
     for(const mod of configFile.mods)
       loadScript(resolvePath('userdata/', mod));
 });
+
+function reloadTerminalConfig(options: ITerminalOptions) {
+  if(Tab.tabCount) {
+    const keys = Object.keys(options) as Array<keyof ITerminalOptions>;
+    for(const tab of Tab.allTabs()) {
+      if(!tab.terminal) continue;
+      const { terminal } = tab;
+      for(const key of keys) {
+        const value = options[key];
+        if(terminal.getOption(key) !== value)
+          terminal.setOption(key, value);
+      }
+      if(tab.active) fit(terminal);
+    }
+  }
+  const { style } = document.body;
+  if(options.theme) {
+    const { theme } = options;
+    style.backgroundColor = theme.background || 'inherit';
+    style.color = theme.foreground || 'inherit';
+  } else {
+    style.backgroundColor = 'inherit';
+    style.color = 'inherit';
+  }
+}
 
 ipcRenderer.on('create-terminal', async (e: IpcMessageEvent, options: TerminalLaunchOptions) => {
   await loadConfig();
@@ -130,6 +132,21 @@ window.addEventListener('beforeunload', e => {
 
 document.body.addEventListener('dragenter', interceptDrop);
 document.body.addEventListener('dragover', interceptDrop);
+document.body.addEventListener('wheel', e => {
+  if(!e.ctrlKey || !(e.target as Element).matches('.pty-container *'))
+    return;
+  interceptEvent(e);
+  const options = configFile && configFile.terminal || {};
+  const delta = e.deltaZ || e.deltaY;
+  if(!options.fontSize)
+    options.fontSize = 12;
+  else if(delta > 0 && options.fontSize > 1)
+    options.fontSize--;
+  else if(delta < 0)
+    options.fontSize++;
+  else return;
+  reloadTerminalConfig(options);
+}, true);
 
 if(document.readyState !== 'complete')
   document.addEventListener('readystatechange', () => {
