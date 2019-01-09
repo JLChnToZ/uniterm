@@ -145,7 +145,7 @@ body.addEventListener('wheel', e => {
 let gestureZoom = 0;
 const gestureZoomTheshold = 10;
 detectZoomGesture(body, d => {
-  gestureZoom += d;
+  gestureZoom -= d;
   while(gestureZoom > gestureZoomTheshold) {
     handleZoom(gestureZoom);
     gestureZoom -= gestureZoomTheshold;
