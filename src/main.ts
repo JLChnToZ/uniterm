@@ -182,6 +182,8 @@ else if(!argv.isolated && !app.requestSingleInstanceLock()) {
       e.sender.send('create-terminal', {});
   }).on('show-config', () =>
     shell.openItem(configFilePath),
+  ).on('create-terminal-request', async (e: IpcMessageEvent, options: TerminalLaunchOptions) =>
+    (await getWindow(true)).send('create-terminal', options),
   );
 }
 

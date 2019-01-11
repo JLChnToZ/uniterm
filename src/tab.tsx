@@ -1,5 +1,5 @@
 import codeToSignal = require('code-to-signal');
-import { remote, shell } from 'electron';
+import { remote, shell, clipboard } from 'electron';
 import * as h from 'hyperscript';
 import { extname } from 'path';
 import { IDisposable, Terminal } from 'xterm';
@@ -95,6 +95,12 @@ export class Tab implements IDisposable {
     /> as HTMLElement;
     contentContainer.appendChild(this.tabContent);
     this.terminal.open(this.tabContent);
+    this.terminal.element.addEventListener('mouseup', e => {
+      if(e.button !== 1 || !this.terminal.hasSelection()) return;
+      interceptEvent(e);
+      clipboard.writeText(this.terminal.getSelection());
+      this.terminal.clearSelection();
+    }, true);
     this.onEnable();
     Tab.tabs.set(this.tabElement, this);
     window.dispatchEvent(new CustomEvent('newtab', { detail: this }));

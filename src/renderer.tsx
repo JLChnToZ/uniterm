@@ -9,51 +9,46 @@ import { TerminalLaunchOptions } from './interfaces';
 import { existsAsync, isExeAsync, lstatAsync } from './pathutils';
 import { electron } from './remote-wrapper';
 import { Tab } from './tab';
-import { TerminalBase } from './terminals/base';
 import { createBackend } from './terminals/selector';
 import { attach as attachWinCtrl } from './winctrl';
 import { startDetect as detectZoomGesture } from './zoom-gesture-detector';
 
 const homePath = remote.app.getPath('home');
+const browserWindow = remote.getCurrentWindow();
 
 const tabContainer = <div className="flex" /> as HTMLDivElement;
 const layoutContainer = document.body.appendChild(<div className="layout-container" /> as HTMLDivElement);
 const header = layoutContainer.appendChild(<div className="header pty-tabs">
   {tabContainer}
-  <a className="icon item" onclick={async () => {
-    await loadConfig();
-    new Tab(tabContainer, layoutContainer).attach(createBackend({
-      cwd: homePath,
-    }));
-  }} ondragenter={acceptFileDrop} ondragover={acceptFileDrop} ondrop={async e => {
+  <a className="icon item" onclick={e => createTab({ cwd: homePath }, e.ctrlKey)}
+    onmouseup={e => {
+      if(e.button !== 1) return;
+      e.preventDefault();
+      createTab({ cwd: homePath }, true);
+    }}
+    ondragenter={acceptFileDrop} ondragover={acceptFileDrop} ondrop={async e => {
     interceptEvent(e);
     const { items } = e.dataTransfer;
     if(items && items.length) {
       // tslint:disable-next-line:prefer-for-of
       for(let i = 0; i < items.length; i++) {
         const item = items[i];
-        let backend: TerminalBase<unknown> | undefined;
+        let backend: TerminalLaunchOptions | undefined;
         switch(item.kind) {
           case 'file': {
             const path = item.getAsFile().path;
             if(!await existsAsync(path))
               break;
             if((await lstatAsync(path)).isDirectory()) {
-              backend = createBackend({
-                cwd: path,
-              });
+              backend = { cwd: path };
               break;
             }
             if(await isExeAsync(path))
-              backend = createBackend({
-                path,
-                cwd: homePath,
-              });
+              backend = { path, cwd: homePath };
             break;
           }
         }
-        if(backend)
-          new Tab(tabContainer, layoutContainer).attach(backend);
+        if(backend) await createTab(backend, e.ctrlKey);
       }
       items.clear();
     }
@@ -62,6 +57,21 @@ const header = layoutContainer.appendChild(<div className="header pty-tabs">
   <div className="drag" />
   <a className="icon item" onclick={() => ipcRenderer.send('show-config')} title="Config">{'\uf085'}</a>
 </div> as HTMLDivElement);
+
+async function createTab(options: TerminalLaunchOptions, newWindow?: boolean) {
+  if(newWindow) {
+    ipcRenderer.send('create-terminal-request', options);
+    return;
+  }
+  await loadConfig();
+  const tab = new Tab(tabContainer, layoutContainer, options.pause);
+  try {
+    tab.attach(createBackend(options));
+  } catch(e) {
+    tab.printDisposableMessage(`Error while creating backend: ${e.message || e}`, true);
+  }
+  browserWindow.focus();
+}
 
 function acceptFileDrop(e: DragEvent) {
   interceptEvent(e);
@@ -115,15 +125,12 @@ function reloadTerminalConfig(options: ITerminalOptions) {
   }
 }
 
-ipcRenderer.on('create-terminal', async (e: IpcMessageEvent, options: TerminalLaunchOptions) => {
-  await loadConfig();
-  const tab = new Tab(tabContainer, layoutContainer, options.pause);
-  tab.attach(createBackend(options));
-  remote.getCurrentWindow().focus();
-});
+ipcRenderer.on('create-terminal', (e: IpcMessageEvent, options: TerminalLaunchOptions) =>
+  createTab(options),
+);
 
 window.addEventListener('beforeunload', e => {
-  if(Tab.tabCount > 1 && remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+  if(Tab.tabCount > 1 && remote.dialog.showMessageBox(browserWindow, {
     type: 'question',
     title: 'Exit?',
     message: `There are still ${Tab.tabCount} sessions are opened, do you really want to close?`,
