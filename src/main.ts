@@ -200,6 +200,9 @@ function createWindow() {
     icon: resolvePath(__dirname, `../icons/uniterm.${process.platform === 'win32' ? 'ico' : 'png'}`),
     frame: false,
     titleBarStyle: 'hiddenInset',
+    webPreferences: {
+      experimentalFeatures: true,
+    },
   });
   const { id } = window;
   window.loadURL('uniterm://app/');

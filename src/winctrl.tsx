@@ -23,7 +23,10 @@ export function attach(parent: HTMLElement) {
     onclick={() => browserWindow.close()}
     title="Close">{'\ufaac'}</a>);
   function changeMaximizeIcon() {
-    maximizeButton.textContent = browserWindow.isMaximized() ? '\ufab1' : '\ufaae';
+    const maximized = browserWindow.isMaximized();
+    maximizeButton.textContent = maximized ? '\ufab1' : '\ufaae';
+    if(maximized) document.body.classList.add('maximized');
+    else document.body.classList.remove('maximized');
   }
   changeMaximizeIcon();
 }

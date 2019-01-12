@@ -1,5 +1,5 @@
 import codeToSignal = require('code-to-signal');
-import { remote, shell, clipboard } from 'electron';
+import { clipboard, remote, shell } from 'electron';
 import * as h from 'hyperscript';
 import { extname } from 'path';
 import { IDisposable, Terminal } from 'xterm';

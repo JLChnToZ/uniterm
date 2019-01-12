@@ -49,6 +49,14 @@ body::after {
   pointer-events: none;
 }
 
+body.maximized {
+  padding-top: 0.4em;
+}
+
+body.maximized::after {
+  display: none;
+}
+
 /* Tweak the terminal selection. */
 .xterm-selection-layer {
   mix-blend-mode: exclusion;
@@ -66,12 +74,63 @@ body::after {
   flex-direction: row;
 }
 
+.maximized .header, .maximized .header::after {
+  transition-property: transform, background-color, opacity, backdrop-filter;
+  transition-duration: 0.5s;
+  transition-delay: 0.5s;
+}
+
+.maximized .header:hover, .maximized .header:hover::after {
+  transition-delay: 0s;
+}
+
+.maximized .header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  transform: translateY(-85%);
+  opacity: 0.5;
+  background-color: transparent;
+  backdrop-filter: blur(0);
+}
+
+/* Hitbox */
+.maximized .header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0.25em;
+  background-color: white;
+  mix-blend-mode: exclusion;
+  opacity: 0.25;
+}
+
+.maximized .header:hover {
+  opacity: 1;
+  transform: none;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(0.1em);
+  transition-delay: 0s;
+}
+
+.maximized .header:hover::after {
+  opacity: 0;
+}
+
 .drag {
   -webkit-app-region: drag;
   display: flex;
   flex: auto;
   min-width: 10em;
   margin-top: 3px;
+}
+
+.maximized .header .drag {
+  -webkit-app-region: no-drag;
 }
 
 .flex {
