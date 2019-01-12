@@ -75,7 +75,7 @@ body.maximized::after {
 }
 
 .maximized .header, .maximized .header::after {
-  transition-property: transform, background-color, opacity, backdrop-filter;
+  transition-property: transform, background-color, opacity;
   transition-duration: 0.5s;
   transition-delay: 0.5s;
 }
@@ -92,8 +92,8 @@ body.maximized::after {
   z-index: 10;
   transform: translateY(-85%);
   opacity: 0.5;
+  backdrop-filter: blur(0.1em);
   background-color: transparent;
-  backdrop-filter: blur(0);
 }
 
 /* Hitbox */
@@ -113,7 +113,6 @@ body.maximized::after {
   opacity: 1;
   transform: none;
   background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(0.1em);
   transition-delay: 0s;
 }
 
