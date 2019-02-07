@@ -8,13 +8,20 @@ import { TerminalBase, TerminalOptions } from './base';
 
 const exePath = electron.app.getPath('exe');
 
+export interface PtyTerminalOptions extends TerminalOptions {
+  experimentalUseConpty?: boolean;
+}
+
 export class PtyShell extends TerminalBase<IPty> {
+  private experimentalUseConpty?: boolean;
+
   get pid() { return this.pty ? this.pty.pid : undefined; }
   get process() { return this.pty ? this.pty.process : undefined; }
 
   constructor(options?: TerminalOptions) {
     super(options);
     if(!this.path) this.path = defaultShell;
+    this.experimentalUseConpty = (options as PtyTerminalOptions).experimentalUseConpty;
   }
 
   public async spawn() {
@@ -30,6 +37,7 @@ export class PtyShell extends TerminalBase<IPty> {
       cols: this.cols,
       rows: this.rows,
       encoding: this.encoding,
+      experimentalUseConpty: this.experimentalUseConpty,
     });
     this.pty.on('data', data => this._pushData(data));
     this.pty.on('exit', (code, signal) => this.emit('end', code, signal));

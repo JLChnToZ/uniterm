@@ -6,6 +6,7 @@ import { register as registerContextMenu } from './default-context-menu';
 import { TerminalLaunchOptions } from './interfaces';
 import { ensureDirectory, existsAsync, isExeAsync, lstatAsync, tryResolvePath } from './pathutils';
 import { register as registerProtocol } from './protocol';
+import { PtyTerminalOptions } from './terminals/pty';
 import { connectToClient } from './terminals/uachost';
 import { packageJson, versionString } from './version';
 
@@ -58,6 +59,12 @@ const args = yargs
       describe: 'Tell Uniterm to use specified directory for storing user data and shared instance info. ' +
         'May be useful if you want to have a portable Uniterm.',
     },
+    'conpty': {
+      boolean: true,
+      hidden: true,
+      describe: 'Whether to use the experimental ConPTY system on Windows. ' +
+        'This flag only effects Windows system.',
+    },
     'disable-hardware-acceleration': {
       boolean: true,
       hidden: true,
@@ -95,6 +102,11 @@ interface Arguments {
    * May be useful if you want to have a portable Uniterm.
    */
   'user-data'?: string;
+  /**
+   * Whether to use the experimental ConPTY system on Windows.
+   * This flag only effects Windows system.
+   */
+  conpty?: boolean;
   /**
    * Disables hadrware acceleration.
    * This flag only have effect when the first Uniterm window launches.
@@ -262,12 +274,13 @@ async function openShell(lArgv: yargs.Arguments<Arguments>, cwd: string) {
         cwd = process.platform === 'win32' && lArgv._[0] === 'wsl' ? '~' : app.getPath('home');
     }
   } catch {}
-  const options: TerminalLaunchOptions = {
+  const options: TerminalLaunchOptions & PtyTerminalOptions = {
     path: lArgv._[0],
     argv: lArgv._.slice(1),
     cwd,
     env,
     pause: lArgv.pause,
+    experimentalUseConpty: lArgv.conpty,
   };
   (await getWindow(lArgv['new-window'])).send('create-terminal', options);
 }
