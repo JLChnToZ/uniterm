@@ -6,6 +6,7 @@ import {
   MenuItemConstructorOptions,
   WebContents,
 } from 'electron';
+import { openProcessManager } from 'electron-process-manager';
 import { electron } from './remote-wrapper';
 
 export interface CustomMenuExtention {
@@ -29,6 +30,7 @@ export const defaultContextMenuTemplate: CustomMenuOption[] = [
   { role: 'selectall', editFlag: 'canSelectAll', accelerator: 'CmdOrCtrl+A' },
   { type: 'separator' },
   { role: 'toggleDevTools', accelerator: 'CmdOrCtrl+Shift+I' },
+  { label: 'Open Process Manager', accelerator: 'Shift+Esc', click: () => openProcessManager() },
 ];
 
 export function showContextMenu(window: BrowserWindow, contextMenu: Electron.Menu, params?: ContextMenuParams) {
@@ -57,6 +59,10 @@ export function register(window: BrowserWindow, webContents?: WebContents) {
     if(input.control && input.shift && input.code === 'KeyI') {
       e.preventDefault();
       webContents.toggleDevTools();
+    }
+    if(input.shift && input.code === 'Escape') {
+      e.preventDefault();
+      openProcessManager();
     }
   });
 }

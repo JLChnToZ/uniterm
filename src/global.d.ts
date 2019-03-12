@@ -44,3 +44,12 @@ declare module 'isexe' {
   const isExe: IsExe;
   export = isExe;
 }
+
+declare module 'electron-process-manager' {
+  interface DefaultSorting {
+    how?: 'ascending' | 'descending';
+    path?: string;
+  }
+
+  export function openProcessManager(defaultSorting?: DefaultSorting): void;
+}

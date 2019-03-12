@@ -59,10 +59,10 @@ const args = yargs
       describe: 'Tell Uniterm to use specified directory for storing user data and shared instance info. ' +
         'May be useful if you want to have a portable Uniterm.',
     },
-    'conpty': {
+    'force-winpty': {
       boolean: true,
       hidden: true,
-      describe: 'Whether to use the experimental ConPTY system on Windows. ' +
+      describe: 'Enforce to use WinPTY instead of ConPTY on Windows. ' +
         'This flag only effects Windows system.',
     },
     'disable-hardware-acceleration': {
@@ -103,10 +103,10 @@ interface Arguments {
    */
   'user-data'?: string;
   /**
-   * Whether to use the experimental ConPTY system on Windows.
+   * Enforce to use WinPTY instead of ConPTY on Windows.
    * This flag only effects Windows system.
    */
-  conpty?: boolean;
+  'force-winpty'?: boolean;
   /**
    * Disables hadrware acceleration.
    * This flag only have effect when the first Uniterm window launches.
@@ -280,7 +280,7 @@ async function openShell(lArgv: yargs.Arguments<Arguments>, cwd: string) {
     cwd,
     env,
     pause: lArgv.pause,
-    experimentalUseConpty: lArgv.conpty,
+    experimentalUseConpty: !lArgv['force-winpty'],
   };
   (await getWindow(lArgv['new-window'])).send('create-terminal', options);
 }
