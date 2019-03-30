@@ -1,5 +1,5 @@
+import { FSWatcher, watch } from 'chokidar';
 import { EventEmitter } from 'events';
-import { FSWatcher, watch } from 'fs';
 import { load } from 'js-yaml';
 import { resolve } from 'path';
 import { setTimeout } from 'timers';
@@ -76,7 +76,7 @@ let watcher: FSWatcher | undefined;
 export function startWatch() {
   reloadConfigPath();
   if(watcher) return watcher;
-  return watcher = watch(configFilePath, async () => {
+  return watcher = watch(configFilePath).on('all', async () => {
     resolveTime = Date.now();
     if(!resolved) return;
     try {

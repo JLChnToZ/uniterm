@@ -23,11 +23,11 @@ packager({
     CompanyName: 'Explosive Theorem Lab.',
   },
   asar: {
-    unpackDir: 'node_modules/{wslpty,node-pty}',
+    unpackDir: 'node_modules/{wslpty,node-pty,fsevents}',
   },
   ignore: [
     /\.([a-z0-9]*ignore|sln|pdb|md|t?log|ps1|lib|exp|map|tsx?|sass|coffee)$/i,
-    /[\\\/](tests?|example|bin|obj|build|@types)([\\\/]|$)/i,
+    /(?<!upath)[\\\/](tests?|example|bin|obj|build|@types)([\\\/]|$)/i,
     /\.gitmodules/i,
     /ts(config|lint).json$/i,
     /yarn.lock$/i,

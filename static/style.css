@@ -57,6 +57,10 @@ body.maximized::after {
   display: none;
 }
 
+.xterm .xterm-viewport {
+  background-color: transparent !important;
+}
+
 /* Tweak the terminal selection. */
 .xterm-selection-layer {
   mix-blend-mode: exclusion;

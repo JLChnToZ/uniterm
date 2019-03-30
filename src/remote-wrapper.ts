@@ -1,14 +1,19 @@
 import * as main from 'electron';
 import { MainInterface, remote } from 'electron';
 
-let props: PropertyDescriptorMap;
-if(remote)
-  props = Object.assign(
-    Object.getOwnPropertyDescriptors(remote),
-    Object.getOwnPropertyDescriptors(main),
-  );
-else
-  props = Object.getOwnPropertyDescriptors(main);
+export const electron: MainInterface = {} as any;
 
 // Clone electron namespace
-export const electron: MainInterface = Object.defineProperties({}, props);
+if(remote)
+  assignProperties(electron, remote);
+assignProperties(electron, main);
+
+function assignProperties(src: any, target: any) {
+  const props = Object.getOwnPropertyDescriptors(target);
+  Object.values(props).forEach(assignTo, { configurable: true });
+  Object.defineProperties(src, props);
+}
+
+function assignTo(this: any, value: any) {
+  Object.assign(value, this);
+}

@@ -36,6 +36,7 @@
     "typescript": "^3.3.3333"
   },
   "dependencies": {
+    "@types/chokidar": "^2.1.3",
     "@types/gist-package-json": "git+https://gist.github.com/5c1cc527fe6b5b7dba41fec7fe54bf6e.git",
     "@types/hyperscript": "0.0.3",
     "@types/js-yaml": "^3.12.0",
@@ -44,6 +45,7 @@
     "@types/which": "^1.3.1",
     "@types/yargs": "^12.0.4",
     "about-window": "^1.12.1",
+    "chokidar": "^2.1.5",
     "code-to-signal": "^1.0.2",
     "default-shell": "^1.0.1",
     "electron-process-manager": "^0.7.0",

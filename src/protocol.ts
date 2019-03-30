@@ -46,7 +46,7 @@ function handleAppProtocol(request: Electron.RegisterFileProtocolRequest) {
   If omitted extension or size indicators, will default to medium png format.
 */
 async function handleFileProtocol(request: Electron.RegisterBufferProtocolRequest): Promise<Electron.MimeTypedBuffer> {
-  const match = /^fileicon:\/\/(.+?)([@_:-](?:small|medium|large))?(\.(?:png|jpe?g))?$/i
+  const match = /^fileicon:\/\/(.+?)(?:[@_:\.-](small|medium|large))?(?:\.(png|jpe?g))?$/i
     .exec(request.url);
   if(!match) return;
   for(let i = 2; ; i++) {
@@ -57,20 +57,20 @@ async function handleFileProtocol(request: Electron.RegisterBufferProtocolReques
     match[i] = '';
   }
   const size = match[2] &&
-    match[2].toLowerCase().substr(1) as Electron.FileIconOptions['size'];
+    match[2].toLowerCase() as Electron.FileIconOptions['size'];
   const image = await (size ?
     getFileIconAsync(match[1], { size }) :
     getFileIconAsync(match[1])
   );
   if(!image) return;
   switch(match[3] && match[3].toLowerCase()) {
-    case '.jpg':
-    case '.jpeg':
+    case 'jpg':
+    case 'jpeg':
       return {
         mimeType: 'image/jpeg',
         data: image.toJPEG(80),
       };
-    case '.png':
+    case 'png':
     default:
       return {
         mimeType: 'image/png',
