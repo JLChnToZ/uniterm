@@ -229,7 +229,7 @@ body.maximized::after {
 
 .flex>.item {
   display: flex;
-  flex: auto;
+  flex: 1 100 auto;
   min-width: 8em;
   max-width: 100%;
 }
@@ -244,6 +244,10 @@ body.maximized::after {
   white-space: nowrap;
   word-wrap: normal;
   text-overflow: ellipsis;
+}
+
+.flex>.active.item {
+  flex-shrink: 1;
 }
 
 img[src^='fileicon://'] {
