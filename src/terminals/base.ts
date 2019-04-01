@@ -1,6 +1,9 @@
 import { Duplex, DuplexOptions } from 'stream';
 import { fixPath } from '../pathutils';
 
+export const ANSI_CLS: string = '\x1b[2J\x1b[1;1H';
+export const ANSI_RESET: string = '\x1b[?1000l\x1b[?25h\x1b[0m';
+
 export interface TerminalOptions extends DuplexOptions {
   path?: string;
   argv?: string[];

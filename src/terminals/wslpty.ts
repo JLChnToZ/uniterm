@@ -1,7 +1,7 @@
 import * as escape from 'shell-escape';
 import { IPty, spawn } from 'wslpty';
 import { resolveWslPath } from '../pathutils';
-import { TerminalBase, TerminalOptions } from './base';
+import { ANSI_RESET, TerminalBase, TerminalOptions } from './base';
 
 export class WslPtyShell extends TerminalBase<IPty> {
   get process() { return this.pty ? (this.pty.process || 'WSL Shell') : undefined; }
@@ -64,7 +64,7 @@ export class WslPtyShell extends TerminalBase<IPty> {
     this.pty.on('data', data => this._pushData(data));
     this.pty.on('error', err => this.emit('error', err));
     this.pty.on('exit', () => this.emit('end'));
-    this._pushData('\x1b[?25h\x1b[0m');
+    this._pushData(ANSI_RESET);
     if(this.path)
       this.pty.write(`${this.path} ${this.argv && escape(this.argv) || ''}\r\n`);
   }

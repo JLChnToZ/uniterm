@@ -7,7 +7,7 @@ import { basename, join as joinPath } from 'path';
 import { promisify } from 'util';
 import { whichAsync } from '../pathutils';
 import { electron } from '../remote-wrapper';
-import { TerminalBase, TerminalOptions } from './base';
+import { ANSI_CLS, ANSI_RESET, TerminalBase, TerminalOptions } from './base';
 import { CMDData, CMDType } from './uachost';
 
 const appPathResolver = electron.app.isPackaged ? '' : `\`"${electron.app.getAppPath()}\`"`;
@@ -96,7 +96,7 @@ export class UACClient extends TerminalBase<EncodeStream> {
       rows: this.rows,
       encoding: this.encoding,
     });
-    this._pushData('\x1b[2J\x1b[1;1H\x1b[?25h\x1b[0m');
+    this._pushData(ANSI_CLS + ANSI_RESET);
   }
 
   private handleResponse(data: CMDData) {

@@ -4,7 +4,7 @@ import { basename, relative } from 'path';
 import * as escape from 'shell-escape';
 import { whichAsync } from '../pathutils';
 import { electron } from '../remote-wrapper';
-import { TerminalBase, TerminalOptions } from './base';
+import { ANSI_RESET, TerminalBase, TerminalOptions } from './base';
 
 const exePath = electron.app.getPath('exe');
 
@@ -41,7 +41,7 @@ export class PtyShell extends TerminalBase<IPty> {
     });
     this.pty.on('data', data => this._pushData(data));
     this.pty.on('exit', (code, signal) => this.emit('end', code, signal));
-    this._pushData('\x1b[?25h\x1b[0m');
+    this._pushData(ANSI_RESET);
   }
 
   public resize(cols: number, rows: number) {
