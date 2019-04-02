@@ -31,6 +31,7 @@ type TypeGetter<T extends object, K extends keyof T> = (this: T) => T[K];
 type TypeSetter<T extends object, K extends keyof T> = (this: T, value: T[K]) => void;
 
 const $getter = Symbol('getter');
+const $undefined = Symbol('undefined');
 
 // Handler
 class LazyHandler<T extends object, K extends keyof T> {
@@ -57,11 +58,11 @@ class LazyHandler<T extends object, K extends keyof T> {
     const handler = this;
     if(!this.getter)
       this.getter = function() {
-        return handler.setValue(this);
+        return handler.processValue(this);
       };
     if(!this.setter && this.write)
-      this.setter = function(value) {
-        return handler.setValue(this, value);
+      this.setter = function(value: T[K] | typeof $undefined = $undefined) {
+        return handler.processValue(this, value);
       };
     return {
       configurable: true,
@@ -71,8 +72,10 @@ class LazyHandler<T extends object, K extends keyof T> {
     };
   }
 
-  private setValue(instance: T, newValue?: T[K]): T[K];
-  private setValue(instance: T, newValue: T[K] | typeof $getter = $getter) {
+  private processValue(
+    instance: T,
+    newValue: T[K] | typeof $getter | typeof $undefined = $getter,
+  ) {
     const attr = findPropertyDescriptor(instance, this.key);
     let hasValue: boolean | undefined;
     let value: T[K];
@@ -80,7 +83,7 @@ class LazyHandler<T extends object, K extends keyof T> {
       if(newValue === $getter)
         value = this.init.call(instance, this.key);
       else
-        value = newValue;
+        value = newValue === $undefined ? undefined : newValue;
       Object.defineProperty(instance, this.key, {
         value,
         configurable: this.configurable,
@@ -94,7 +97,7 @@ class LazyHandler<T extends object, K extends keyof T> {
       else
         LazyHandler.allCache.set(instance, cache = Object.create(null));
       if(newValue !== $getter)
-        value = newValue;
+        value = newValue === $undefined ? undefined : newValue;
       else if(attr.get && attr.get !== this.getter)
         value = attr.get.call(instance);
       else if(!hasValue)
