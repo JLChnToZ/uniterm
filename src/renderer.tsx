@@ -6,10 +6,10 @@ import { fit } from 'xterm/lib/addons/fit/fit';
 import { configFile, events, loadConfig, startWatch } from './config';
 import { interceptDrop, interceptEvent, loadScript } from './domutils';
 import { TerminalLaunchOptions } from './interfaces';
+import { lazyProperty } from './lazy-decorator';
 import { existsAsync, isExeAsync, lstatAsync } from './pathutils';
-import { electron } from './remote-wrapper';
 import { Tab } from './tab';
-import { createBackend } from './terminals/selector';
+import { createBackend, register } from './terminals';
 import { attach as attachWinCtrl } from './winctrl';
 import { startDetect as detectZoomGesture } from './zoom-gesture-detector';
 
@@ -186,7 +186,7 @@ else
 startWatch();
 
 // Expose everything for mods, except for requirable stuffs
-Object.assign(window, { Tab, electron });
+Object.assign(window, { Tab, registerTerminalHandler: register });
 Object.defineProperty(window, 'activeTab', {
   get() { return Tab.activeTab; },
   set(value: Tab) {
@@ -196,3 +196,9 @@ Object.defineProperty(window, 'activeTab', {
     Tab.activeTab.onEnable();
   },
 });
+// Lazy require to expose, they will not load if nobody is going to use them.
+lazyProperty.require(require, './remote-wrapper', 'electron', window);
+lazyProperty.require(require, './terminals/base', 'TerminalBase', window);
+lazyProperty.require(require, './terminals/pty', 'PtyShell', window);
+lazyProperty.require(require, './terminals/wslpty', 'WslPtyShell', window);
+lazyProperty.require(require, './terminals/uacwrapper', 'UACClient', window);

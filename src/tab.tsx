@@ -8,7 +8,6 @@ import { webLinksInit } from 'xterm/lib/addons/webLinks/webLinks';
 import { winptyCompatInit } from 'xterm/lib/addons/winptyCompat/winptyCompat';
 import { configFile } from './config';
 import { getAsStringAsync, interceptEvent } from './domutils';
-import { ctrlKey } from './key-detector';
 import { TerminalBase } from './terminals/base';
 
 export class Tab implements IDisposable {
@@ -70,9 +69,8 @@ export class Tab implements IDisposable {
       fontFamily: 'mononoki, monospace',
       cursorBlink: true,
     });
-    webLinksInit(this.terminal, (e, uri) => ctrlKey && shell.openExternal(uri), {
-      tooltipCallback: () => ctrlKey,
-      willLinkActivate: () => ctrlKey,
+    webLinksInit(this.terminal, (e, uri) => e.ctrlKey && shell.openExternal(uri), {
+      willLinkActivate: isCtrlKeyOn,
     });
     winptyCompatInit(this.terminal);
     this.disposables = [];
@@ -297,6 +295,10 @@ function attachDisposable(listener: NodeJS.EventEmitter, key: string, callback: 
     listener.removeListener(key, callback);
     callback = null;
   } };
+}
+
+function isCtrlKeyOn(e: MouseEvent) {
+  return e.ctrlKey;
 }
 
 window.addEventListener('close', Tab.destroyAllTabs);

@@ -1,15 +1,29 @@
 type DomElement = Element;
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] | DeepPartial<T[K]>;
+type AssignableProperty<T, K extends keyof T> =
+  (<R>() => R extends { [I in K]: T[I] } ? true : false) extends
+  (<R>() => R extends { -readonly [I in K]: T[I] } ? true : false) ?
+    T[K] extends string | number | boolean | symbol | Function ?
+      T[K] :
+    AssignableObject<T[K]> :
+  never;
+type AssignableObject<T> = {
+  [K in keyof T]?: AssignableProperty<T, K>;
 };
-type FreePartialProperties<T> = {
-  [K in keyof T]: DeepPartial<T[K]>;
+type AssignableDomElement<T extends Element> = {
+  [K in keyof T]?:
+    // Bypass readonly check
+    T[K] extends CSSStyleDeclaration | DOMStringMap ?
+      AssignableObject<T[K]> :
+    AssignableProperty<T, K>;
 };
 
 declare namespace JSX {
-  interface Element extends DomElement {}
-  interface IntrinsicElements extends
-    FreePartialProperties<ElementTagNameMap> {
+  type Element = DomElement;
+  type IntrinsicElementMap = {
+    [K in keyof ElementTagNameMap]:
+      ElementTagNameMap[K] | AssignableDomElement<ElementTagNameMap[K]>;
+  };
+  interface IntrinsicElements extends IntrinsicElementMap {
     [tagName: string]: any;
   }
 }

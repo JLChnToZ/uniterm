@@ -1,9 +1,9 @@
 import { createDecodeStream, createEncodeStream } from 'msgpack-lite';
 import { connect as connectServer } from 'net';
 import { join as joinPath } from 'path';
+import { createBackend } from '.';
 import { TerminalLaunchOptions } from '../interfaces';
 import { TerminalBase } from './base';
-import { createBackend } from './selector';
 
 export const enum CMDType {
   Data = 0x01,
