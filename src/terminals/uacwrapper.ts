@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
 import { randomBytes } from 'crypto';
-import * as defaultShell from 'default-shell';
+import defaultShell from 'default-shell';
 import { createDecodeStream, createEncodeStream, EncodeStream } from 'msgpack-lite';
 import { createServer, Server, Socket } from 'net';
 import { basename, join as joinPath } from 'path';

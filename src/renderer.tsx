@@ -1,5 +1,5 @@
 import { IpcMessageEvent, ipcRenderer, remote } from 'electron';
-import * as h from 'hyperscript';
+import h from 'hyperscript';
 import { resolve as resolvePath } from 'url';
 import { ITerminalOptions } from 'xterm';
 import { fit } from 'xterm/lib/addons/fit/fit';

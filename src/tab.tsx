@@ -1,6 +1,6 @@
 import codeToSignal = require('code-to-signal');
 import { clipboard, remote, shell } from 'electron';
-import * as h from 'hyperscript';
+import h from 'hyperscript';
 import { extname } from 'path';
 import { IDisposable, Terminal } from 'xterm';
 import { fit } from 'xterm/lib/addons/fit/fit';

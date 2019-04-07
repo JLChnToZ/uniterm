@@ -1,4 +1,4 @@
-import * as h from 'hyperscript';
+import h from 'hyperscript';
 
 export function getAsStringAsync(d: DataTransferItem) {
   return new Promise<string>(resolve => d.getAsString(resolve));

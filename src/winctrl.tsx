@@ -1,5 +1,5 @@
 import { remote } from 'electron';
-import * as h from 'hyperscript';
+import h from 'hyperscript';
 
 const browserWindow = remote.getCurrentWindow();
 

@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, IpcMessageEvent, shell, WebContents } from 'electron';
 import { dirname, relative as relativePath, resolve as resolvePath } from 'path';
-import * as yargs from 'yargs';
+import yargs from 'yargs';
 import { configFilePath, loadConfig, reloadConfigPath } from './config';
 import { register as registerContextMenu } from './default-context-menu';
 import { TerminalLaunchOptions } from './interfaces';

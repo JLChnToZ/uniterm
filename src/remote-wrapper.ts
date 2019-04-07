@@ -1,4 +1,4 @@
-import * as main from 'electron';
+import main from 'electron';
 import { MainInterface, remote } from 'electron';
 
 export const electron: MainInterface = {} as any;

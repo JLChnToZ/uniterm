@@ -1,4 +1,4 @@
-import * as defaultShell from 'default-shell';
+import defaultShell from 'default-shell';
 import { IPty, spawn } from 'node-pty';
 import { basename, relative } from 'path';
 import escape from 'shell-escape';
