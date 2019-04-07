@@ -2,6 +2,8 @@
 
 An evolution of Uniterm pseudo terminal emulator.
 
+![Preview](.preview.png)
+
 Difference between Uniterm2 and old Uniterm:
 - Uniterm2 is based on xterm.js and the old one is Google's hterm.
 - Uniterm2 has removed built-in MinSH component which exists in the old one.
