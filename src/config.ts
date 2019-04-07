@@ -21,8 +21,6 @@ export let configFilePath = '';
 let rawDefaultConfigFile: string | undefined;
 let defaultConfigFile: ConfigFile | undefined;
 
-let resolved = true;
-let resolveTime = Date.now();
 let isReloading = false;
 let reloadingPromise: Promise<ConfigFile> | undefined;
 
@@ -76,16 +74,8 @@ let watcher: FSWatcher | undefined;
 export function startWatch() {
   reloadConfigPath();
   if(watcher) return watcher;
-  return watcher = watch(configFilePath).on('all', async () => {
-    resolveTime = Date.now();
-    if(!resolved) return;
-    try {
-      resolved = false;
-      while(Date.now() - resolveTime < 100)
-        await delay(100);
-      await loadConfig(true);
-    } finally {
-      resolved = true;
-    }
-  });
+  return watcher = watch(configFilePath, {
+    ignoreInitial: true,
+    awaitWriteFinish: true,
+  }).on('all', () => loadConfig(true));
 }
