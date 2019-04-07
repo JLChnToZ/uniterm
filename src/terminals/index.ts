@@ -1,10 +1,11 @@
-import { Class, lazyProperty } from '../lazy-decorator';
+import { Class } from 'lazy-initializer/lib/lazy-property';
+import { requireLater } from '../require-later';
 import { TerminalBase } from './base';
 import { register, shiftPath } from './selector';
 
 const lazyPty: { [type: string]: Class<TerminalBase<unknown>> } = {};
-lazyProperty.require(require, './wslpty', 'WslPtyShell', lazyPty);
-lazyProperty.require(require, './uacwrapper', 'UACClient', lazyPty);
+requireLater(require, './wslpty', lazyPty, 'WslPtyShell');
+requireLater(require, './uacwrapper', lazyPty, 'UACClient');
 
 register('wsl', o => {
   if(process.platform !== 'win32') return;

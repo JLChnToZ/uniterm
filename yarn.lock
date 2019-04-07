@@ -3321,6 +3321,11 @@ lazy-cache@^1.0.3:
   resolved "https://registry.yarnpkg.com/lazy-cache/-/lazy-cache-1.0.4.tgz#a1d78fc3a50474cb80845d3b3b6e1da49a446e8e"
   integrity sha1-odePw6UEdMuAhF07O24dpJpEbo4=
 
+lazy-initializer@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/lazy-initializer/-/lazy-initializer-0.2.0.tgz#cde5a88e31f1bd6dc8847015597f17d138fa3140"
+  integrity sha512-QHQ+IUE5tzfkI/838Tgm0E5DCSp6S54VQ5poSNTHo0nRibc3KGrxf+cxkch13dGwiTQPw0Ro45Lcgk0gwiy97A==
+
 lcid@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/lcid/-/lcid-1.0.0.tgz#308accafa0bc483a3867b4b6f2b9506251d1b835"

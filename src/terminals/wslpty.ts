@@ -1,4 +1,4 @@
-import * as escape from 'shell-escape';
+import escape from 'shell-escape';
 import { IPty, spawn } from 'wslpty';
 import { resolveWslPath } from '../pathutils';
 import { ANSI_RESET, TerminalBase, TerminalOptions } from './base';

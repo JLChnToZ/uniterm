@@ -1,7 +1,7 @@
 import * as defaultShell from 'default-shell';
 import { IPty, spawn } from 'node-pty';
 import { basename, relative } from 'path';
-import * as escape from 'shell-escape';
+import escape from 'shell-escape';
 import { whichAsync } from '../pathutils';
 import { electron } from '../remote-wrapper';
 import { ANSI_RESET, TerminalBase, TerminalOptions } from './base';

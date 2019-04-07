@@ -6,8 +6,8 @@ import { fit } from 'xterm/lib/addons/fit/fit';
 import { configFile, events, loadConfig, startWatch } from './config';
 import { interceptDrop, interceptEvent, loadScript } from './domutils';
 import { TerminalLaunchOptions } from './interfaces';
-import { lazyProperty } from './lazy-decorator';
 import { existsAsync, isExeAsync, lstatAsync } from './pathutils';
+import { requireLater } from './require-later';
 import { Tab } from './tab';
 import { createBackend, register } from './terminals';
 import { attach as attachWinCtrl } from './winctrl';
@@ -197,8 +197,8 @@ Object.defineProperty(window, 'activeTab', {
   },
 });
 // Lazy require to expose, they will not load if nobody is going to use them.
-lazyProperty.require(require, './remote-wrapper', 'electron', window);
-lazyProperty.require(require, './terminals/base', 'TerminalBase', window);
-lazyProperty.require(require, './terminals/pty', 'PtyShell', window);
-lazyProperty.require(require, './terminals/wslpty', 'WslPtyShell', window);
-lazyProperty.require(require, './terminals/uacwrapper', 'UACClient', window);
+requireLater(require, './remote-wrapper', window, 'electron');
+requireLater(require, './terminals/base', window, 'TerminalBase');
+requireLater(require, './terminals/pty', window, 'PtyShell');
+requireLater(require, './terminals/wslpty', window, 'WslPtyShell');
+requireLater(require, './terminals/uacwrapper', window, 'UACClient');

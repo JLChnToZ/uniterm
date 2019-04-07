@@ -1,9 +1,9 @@
 import { spawn } from 'child_process';
 import { exists, lstat, mkdir, readFile, writeFile } from 'fs';
-import * as isExe from 'isexe';
+import isExe from 'isexe';
 import { delimiter, dirname, resolve as resolvePath, sep } from 'path';
 import { promisify } from 'util';
-import * as which from 'which';
+import which from 'which';
 
 export const readFileAsync = promisify(readFile);
 export const writeFileAsync = promisify(writeFile);
