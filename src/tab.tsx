@@ -2,7 +2,9 @@ import codeToSignal = require('code-to-signal');
 import { clipboard, remote, shell } from 'electron';
 import h from 'hyperscript';
 import { extname } from 'path';
-import { IDisposable, Terminal } from 'xterm';
+import { fromEvent } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import { IDisposable, ITerminalOptions, Terminal } from 'xterm';
 import { fit } from 'xterm/lib/addons/fit/fit';
 import { webLinksInit } from 'xterm/lib/addons/webLinks/webLinks';
 import { winptyCompatInit } from 'xterm/lib/addons/winptyCompat/winptyCompat';
@@ -61,6 +63,7 @@ export class Tab implements IDisposable {
   public active: boolean;
   public pause?: boolean;
   private explicitTitle?: boolean;
+  private pendingUpdateOptions?: ITerminalOptions;
 
   constructor(tabContainer: HTMLElement, contentContainer: HTMLElement, pause?: boolean) {
     this.defaultTitle = 'Shell';
@@ -157,6 +160,10 @@ export class Tab implements IDisposable {
     this.active = true;
     Tab.activeTab = this;
     setTitle(this.title);
+    if(this.pendingUpdateOptions) {
+      this.updateSettings(this.pendingUpdateOptions);
+      delete this.pendingUpdateOptions;
+    }
     const { parentElement } = this.tabElement;
     if(parentElement) {
       const { children } = parentElement;
@@ -212,6 +219,15 @@ export class Tab implements IDisposable {
     Tab.activeTab = Tab.tabs.values().next().value;
     if(Tab.activeTab)
       Tab.activeTab.onEnable();
+  }
+
+  public updateSettings(options: ITerminalOptions) {
+    if(!this.active) {
+      this.pendingUpdateOptions = options;
+      return;
+    }
+    if(!this.terminal) return;
+    Object.entries(options).forEach(updateTerminalOptions, this.terminal);
   }
 
   private handleDisable() {
@@ -301,9 +317,13 @@ function isCtrlKeyOn(e: MouseEvent) {
   return e.ctrlKey;
 }
 
-window.addEventListener('close', Tab.destroyAllTabs);
+function updateTerminalOptions(this: Terminal, [key, value]: [keyof ITerminalOptions, any]) {
+  if(this.getOption(key) !== value)
+    this.setOption(key, value);
+}
 
-window.addEventListener('resize', () => {
+window.addEventListener('close', Tab.destroyAllTabs);
+fromEvent(window, 'resize').pipe(debounceTime(250)).subscribe(() => {
   if(Tab.activeTab && Tab.activeTab.terminal)
     fit(Tab.activeTab.terminal);
 });

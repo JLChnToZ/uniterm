@@ -1,7 +1,9 @@
 import { IpcMessageEvent, ipcRenderer, remote } from 'electron';
 import h from 'hyperscript';
+import { fromEvent, fromEventPattern, merge } from 'rxjs';
+import { debounceTime, filter, map, scan } from 'rxjs/operators';
 import { resolve as resolvePath } from 'url';
-import { ITerminalOptions } from 'xterm';
+import { IDisposable, ITerminalOptions } from 'xterm';
 import { fit } from 'xterm/lib/addons/fit/fit';
 import { configFile, events, loadConfig, startWatch } from './config';
 import { interceptDrop, interceptEvent, loadScript } from './domutils';
@@ -101,19 +103,11 @@ events.on('config', () => {
 });
 
 function reloadTerminalConfig(options: ITerminalOptions) {
-  if(Tab.tabCount) {
-    const keys = Object.keys(options) as Array<keyof ITerminalOptions>;
+  if(Tab.tabCount)
     for(const tab of Tab.allTabs()) {
-      if(!tab.terminal) continue;
-      const { terminal } = tab;
-      for(const key of keys) {
-        const value = options[key];
-        if(terminal.getOption(key) !== value)
-          terminal.setOption(key, value);
-      }
-      if(tab.active) fit(terminal);
+      tab.updateSettings(options);
+      if(tab.active) fit(tab.terminal);
     }
-  }
   const { style } = document.body;
   if(options.theme) {
     const { theme } = options;
@@ -142,28 +136,17 @@ const { body } = document;
 
 body.addEventListener('dragenter', interceptDrop);
 body.addEventListener('dragover', interceptDrop);
-body.addEventListener('wheel', e => {
-  if(!e.ctrlKey || !(e.target as Element).matches('.pty-container *'))
-    return;
-  interceptEvent(e);
-  handleZoom(e.deltaZ || e.deltaY);
-}, true);
 
-let gestureZoom = 0;
-const gestureZoomTheshold = 10;
-detectZoomGesture(body, d => {
-  gestureZoom -= d;
-  while(gestureZoom > gestureZoomTheshold) {
-    handleZoom(gestureZoom);
-    gestureZoom -= gestureZoomTheshold;
-  }
-  while(gestureZoom < -gestureZoomTheshold) {
-    handleZoom(gestureZoom);
-    gestureZoom += gestureZoomTheshold;
-  }
-}, true);
-
-function handleZoom(delta: number) {
+const wheelObservable = fromEvent<WheelEvent>(body, 'wheel')
+.pipe(filter(e => e.ctrlKey && (e.target as Element).matches('.pty-container *')));
+wheelObservable.subscribe(interceptEvent);
+merge(
+  wheelObservable.pipe(map(e => e.deltaZ || e.deltaY)),
+  fromEventPattern<number>(
+    cb => detectZoomGesture(body, cb, true),
+    (_, disposable: IDisposable) => disposable.dispose(),
+  ).pipe(scan((a, b) => a - b, 0), debounceTime(250)),
+).subscribe(delta => {
   const options = configFile && configFile.terminal || {};
   if(!options.fontSize)
     options.fontSize = 12;
@@ -173,7 +156,7 @@ function handleZoom(delta: number) {
     options.fontSize++;
   else return;
   reloadTerminalConfig(options);
-}
+});
 
 if(document.readyState !== 'complete')
   document.addEventListener('readystatechange', () => {
