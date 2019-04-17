@@ -1,9 +1,7 @@
 import { IpcMessageEvent, ipcRenderer, remote } from 'electron';
 import h from 'hyperscript';
-import { fromEvent, fromEventPattern, merge } from 'rxjs';
-import { debounceTime, filter, map, scan } from 'rxjs/operators';
 import { resolve as resolvePath } from 'url';
-import { IDisposable, ITerminalOptions } from 'xterm';
+import { ITerminalOptions } from 'xterm';
 import { fit } from 'xterm/lib/addons/fit/fit';
 import { configFile, events, loadConfig, startWatch } from './config';
 import { interceptDrop, interceptEvent, loadScript } from './domutils';
@@ -13,7 +11,6 @@ import { requireLater } from './require-later';
 import { Tab } from './tab';
 import { createBackend, register } from './terminals';
 import { attach as attachWinCtrl } from './winctrl';
-import { startDetect as detectZoomGesture } from './zoom-gesture-detector';
 
 const homePath = remote.app.getPath('home');
 const browserWindow = remote.getCurrentWindow();
@@ -136,27 +133,6 @@ const { body } = document;
 
 body.addEventListener('dragenter', interceptDrop);
 body.addEventListener('dragover', interceptDrop);
-
-const wheelObservable = fromEvent<WheelEvent>(body, 'wheel')
-.pipe(filter(e => e.ctrlKey && (e.target as Element).matches('.pty-container *')));
-wheelObservable.subscribe(interceptEvent);
-merge(
-  wheelObservable.pipe(map(e => e.deltaZ || e.deltaY)),
-  fromEventPattern<number>(
-    cb => detectZoomGesture(body, cb, true),
-    (_, disposable: IDisposable) => disposable.dispose(),
-  ).pipe(scan((a, b) => a - b, 0), debounceTime(250)),
-).subscribe(delta => {
-  const options = configFile && configFile.terminal || {};
-  if(!options.fontSize)
-    options.fontSize = 12;
-  else if(delta > 0 && options.fontSize > 1)
-    options.fontSize--;
-  else if(delta < 0)
-    options.fontSize++;
-  else return;
-  reloadTerminalConfig(options);
-});
 
 if(document.readyState !== 'complete')
   document.addEventListener('readystatechange', () => {
