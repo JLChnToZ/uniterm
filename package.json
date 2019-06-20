@@ -1,6 +1,6 @@
 {
   "name": "uniterm",
-  "version": "0.15.5",
+  "version": "0.16.0",
   "description": "Universal Terminal Emulator",
   "main": "./lib/main.js",
   "scripts": {
