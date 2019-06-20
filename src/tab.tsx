@@ -7,7 +7,6 @@ import { debounceTime } from 'rxjs/operators';
 import { IDisposable, ITerminalOptions, Terminal } from 'xterm';
 import { fit } from 'xterm/lib/addons/fit/fit';
 import { webLinksInit } from 'xterm/lib/addons/webLinks/webLinks';
-import { winptyCompatInit } from 'xterm/lib/addons/winptyCompat/winptyCompat';
 import { configFile } from './config';
 import { getAsStringAsync, interceptEvent } from './domutils';
 import { TerminalBase } from './terminals/base';
@@ -75,7 +74,6 @@ export class Tab implements IDisposable {
     webLinksInit(this.terminal, (e, uri) => e.ctrlKey && shell.openExternal(uri), {
       willLinkActivate: isCtrlKeyOn,
     });
-    winptyCompatInit(this.terminal);
     this.disposables = [];
     this.active = true;
     tabContainer.appendChild(this.tabElement = <a className="item"
@@ -104,6 +102,8 @@ export class Tab implements IDisposable {
     }, true);
     this.onEnable();
     Tab.tabs.set(this.tabElement, this);
+    if(Tab.tabCount === 1)
+      onFirstTabCreated(this.terminal);
     window.dispatchEvent(new CustomEvent('newtab', { detail: this }));
   }
 
@@ -298,6 +298,18 @@ export class Tab implements IDisposable {
   }
 }
 
+function onFirstTabCreated(terminal: Terminal) {
+  try {
+    const { actualCellWidth, actualCellHeight } = (terminal as any)._core._renderCoordinator.dimensions;
+    const elementStyle = window.getComputedStyle(terminal.element.querySelector('.xterm-screen'));
+    remote.getCurrentWindow().setSize(
+      window.outerWidth - parseInt(elementStyle.getPropertyValue('width'), 10) + actualCellWidth * 80,
+      window.outerHeight - parseInt(elementStyle.getPropertyValue('height'), 10) + actualCellHeight * 25,
+    );
+  } catch(e) {
+    console.error(e);
+  }
+}
 
 const originalTitle = document.title;
 function setTitle(title?: string) {

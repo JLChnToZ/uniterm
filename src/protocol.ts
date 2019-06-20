@@ -1,15 +1,22 @@
-import { app, NativeImage, protocol } from 'electron';
+import { app, protocol } from 'electron';
 import { resolve as resolvePath } from 'path';
 import { parse } from 'url';
-import { promisify } from 'util';
 import { existsAsync } from './pathutils';
 
 const rootPath = resolvePath(__dirname, '..');
 const staticPath = resolvePath(rootPath, 'static');
-const getFileIconAsync: (path: string, options?: Electron.FileIconOptions) => Promise<NativeImage> =
-  promisify(app.getFileIcon.bind(app));
 
-protocol.registerStandardSchemes(['uniterm'], { secure: true });
+protocol.registerSchemesAsPrivileged([{
+  scheme: 'uniterm',
+  privileges: {
+    standard: true,
+    secure: true,
+  },
+}, {
+  scheme: 'fileicon',
+  privileges: {
+  },
+}]);
 
 export function register() {
   protocol.registerFileProtocol('uniterm', (request, callback) =>
@@ -59,8 +66,8 @@ async function handleFileProtocol(request: Electron.RegisterBufferProtocolReques
   const size = match[2] &&
     match[2].toLowerCase() as Electron.FileIconOptions['size'];
   const image = await (size ?
-    getFileIconAsync(match[1], { size }) :
-    getFileIconAsync(match[1])
+    app.getFileIcon(match[1], { size }) :
+    app.getFileIcon(match[1])
   );
   if(!image) return;
   switch(match[3] && match[3].toLowerCase()) {

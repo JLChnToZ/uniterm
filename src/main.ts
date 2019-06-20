@@ -214,6 +214,7 @@ function createWindow() {
     titleBarStyle: 'hiddenInset',
     webPreferences: {
       experimentalFeatures: true,
+      preload: resolvePath(__dirname, 'preload.js'),
     },
   });
   const { id } = window;

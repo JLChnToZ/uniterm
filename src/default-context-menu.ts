@@ -29,7 +29,7 @@ export const defaultContextMenuTemplate: CustomMenuOption[] = [
   { type: 'separator' },
   { role: 'selectall', editFlag: 'canSelectAll', accelerator: 'CmdOrCtrl+A' },
   { type: 'separator' },
-  { role: 'toggleDevTools', accelerator: 'CmdOrCtrl+Shift+I' },
+  { role: 'toggledevtools', accelerator: 'CmdOrCtrl+Shift+I' },
   { label: 'Open Process Manager', accelerator: 'Shift+Esc', click: () => openProcessManager() },
 ];
 
