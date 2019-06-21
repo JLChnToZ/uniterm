@@ -180,6 +180,11 @@ terminal:
     # ANSI bright white (eg. `\x1b[1;37m`)
     brightWhite: "#FFF"
 
+misc:
+    # Initial size when the first terminal is opened
+    initialCols: 80 # default: 80
+    initialRows: 25 # default: 25
+
 # Mod files (*.js), will be loaded into all windows when the config file load/reloads
 # The load path is relative to $relative_path
 mods:

@@ -13,6 +13,7 @@ import { packageJson, versionString } from './version';
 const windows: { [id: number]: BrowserWindow } = {};
 const readyWindowIds = new Set<number>();
 let activeReadyWindowId: number | undefined;
+let focusedWindowId: number | undefined;
 const openingWindows: { [id: number]: Array<(value: WebContents) => void> } = {};
 
 const args = yargs
@@ -184,7 +185,7 @@ else if(!argv.isolated && !app.requestSingleInstanceLock()) {
   ipcMain.on('ready', (e: IpcMessageEvent) => {
     const { id } = e.sender;
     readyWindowIds.add(id);
-    if(activeReadyWindowId === undefined)
+    if(activeReadyWindowId === undefined || focusedWindowId === id)
       activeReadyWindowId = id;
     if(openingWindows[id]) {
       for(const resolve of openingWindows[id])
@@ -229,6 +230,7 @@ function createWindow() {
       activeReadyWindowId = [...readyWindowIds][0];
   });
   window.on('focus', () => {
+    focusedWindowId = id;
     if(readyWindowIds.has(id))
       activeReadyWindowId = id;
   });

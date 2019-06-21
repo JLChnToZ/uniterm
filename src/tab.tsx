@@ -300,11 +300,18 @@ export class Tab implements IDisposable {
 
 function onFirstTabCreated(terminal: Terminal) {
   try {
+    let cols = 80;
+    let rows = 25;
+    if(configFile.misc) {
+      const { initialCols, initialRows } = configFile.misc;
+      if(initialCols! > 0) cols = initialCols;
+      if(initialRows! > 0) rows = initialRows;
+    }
     const { actualCellWidth, actualCellHeight } = (terminal as any)._core._renderCoordinator.dimensions;
     const elementStyle = window.getComputedStyle(terminal.element.querySelector('.xterm-screen'));
     remote.getCurrentWindow().setSize(
-      window.outerWidth - parseInt(elementStyle.getPropertyValue('width'), 10) + actualCellWidth * 80,
-      window.outerHeight - parseInt(elementStyle.getPropertyValue('height'), 10) + actualCellHeight * 25,
+      window.outerWidth - parseInt(elementStyle.getPropertyValue('width'), 10) + actualCellWidth * cols,
+      window.outerHeight - parseInt(elementStyle.getPropertyValue('height'), 10) + actualCellHeight * rows,
     );
   } catch(e) {
     console.error(e);

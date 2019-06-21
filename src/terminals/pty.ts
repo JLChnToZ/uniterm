@@ -54,7 +54,7 @@ export class PtyShell extends TerminalBase<IPty> {
     try {
       if(typeof chunk === 'string') {
         if(this.encoding && this.encoding !== encoding)
-          chunk = Buffer.from(chunk, encoding).toString(this.encoding);
+          chunk = Buffer.from(chunk, encoding as BufferEncoding).toString(this.encoding);
         this.pty.write(chunk);
       } else if(Buffer.isBuffer(chunk))
         this.pty.write(chunk.toString(this.encoding || 'utf8'));

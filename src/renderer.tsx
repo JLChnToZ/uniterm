@@ -1,5 +1,7 @@
 import { IpcMessageEvent, ipcRenderer, remote } from 'electron';
 import h from 'hyperscript';
+import Module from 'module';
+import { dirname } from 'path';
 import { resolve as resolvePath } from 'url';
 import { ITerminalOptions } from 'xterm';
 import { fit } from 'xterm/lib/addons/fit/fit';
@@ -145,7 +147,13 @@ else
 startWatch();
 
 // Expose everything for mods, except for requirable stuffs
-Object.assign(window, { Tab, registerTerminalHandler: register });
+const fakePath = resolvePath(__dirname + '/', '../__renderer');
+Object.assign(window, {
+  Tab,
+  registerTerminalHandler: register,
+  require: Module.createRequireFromPath(fakePath),
+  __dirname: dirname(fakePath),
+});
 Object.defineProperty(window, 'activeTab', {
   get() { return Tab.activeTab; },
   set(value: Tab) {

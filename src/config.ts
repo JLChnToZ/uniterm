@@ -8,10 +8,12 @@ import { ITerminalOptions } from 'xterm';
 import { existsAsync, readFileAsync, writeFileAsync } from './pathutils';
 import { electron } from './remote-wrapper';
 
-const delay = promisify(setTimeout);
-
 export interface ConfigFile {
   terminal: ITerminalOptions;
+  misc?: {
+    initialCols?: number;
+    initialRows?: number;
+  };
   mods?: string[];
 }
 
