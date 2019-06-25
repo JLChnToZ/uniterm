@@ -308,11 +308,13 @@ function onFirstTabCreated(terminal: Terminal) {
       if(initialRows! > 0) rows = initialRows;
     }
     const { actualCellWidth, actualCellHeight } = (terminal as any)._core._renderCoordinator.dimensions;
-    const elementStyle = window.getComputedStyle(terminal.element.querySelector('.xterm-screen'));
-    remote.getCurrentWindow().setSize(
-      window.outerWidth - parseInt(elementStyle.getPropertyValue('width'), 10) + actualCellWidth * cols,
-      window.outerHeight - parseInt(elementStyle.getPropertyValue('height'), 10) + actualCellHeight * rows,
+    const { width, height } = window.getComputedStyle(terminal.element.querySelector('.xterm-screen'));
+    const browserWindow = remote.getCurrentWindow();
+    browserWindow.setSize(
+      window.outerWidth - parseInt(width, 10) + actualCellWidth * cols,
+      window.outerHeight - parseInt(height, 10) + actualCellHeight * rows,
     );
+    browserWindow.center();
   } catch(e) {
     console.error(e);
   }
