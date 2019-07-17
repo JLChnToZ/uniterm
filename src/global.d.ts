@@ -67,3 +67,21 @@ declare module 'electron-process-manager' {
 
   export function openProcessManager(defaultSorting?: DefaultSorting): void;
 }
+
+declare module 'keyboardevent-from-electron-accelerator' {
+  interface IKeyboardEvent {
+    code: string;
+    ctrlKey?: boolean;
+    altKey?: boolean;
+    shiftKey?: boolean;
+  }
+  interface IState {
+    accelerator: string;
+    event: IKeyboardEvent;
+  }
+  export function reduceModifier(state: IState, modifier: string): IState;
+  export function reducePlus(state: IState): IState;
+  export function reduceKey(state: IState, key: string): IState;
+  export function reduceCode(state: IState, event: IKeyboardEvent): IState;
+  export function toKeyEvent(accelerator: string): IKeyboardEvent;
+}

@@ -4,14 +4,15 @@ import {
   EditFlags,
   MenuItem,
   MenuItemConstructorOptions,
-  WebContents,
 } from 'electron';
 import { openProcessManager } from 'electron-process-manager';
+import { IKeyboardEvent, toKeyEvent } from 'keyboardevent-from-electron-accelerator';
 import { electron } from './remote-wrapper';
 
 export interface CustomMenuExtention {
   editFlag?: keyof EditFlags;
   hideIfReadOnly?: boolean;
+  modifier?: IKeyboardEvent;
 }
 
 export interface CustomMenuOption extends MenuItemConstructorOptions, CustomMenuExtention {}
@@ -19,15 +20,19 @@ export interface CustomMenuOption extends MenuItemConstructorOptions, CustomMenu
 export interface CustomMenuItem extends MenuItem, CustomMenuExtention {}
 
 export const defaultContextMenuTemplate: CustomMenuOption[] = [
-  { role: 'undo', editFlag: 'canUndo', accelerator: 'CmdOrCtrl+Z', hideIfReadOnly: true },
-  { role: 'redo', editFlag: 'canRedo', accelerator: 'CmdOrCtrl+Y', hideIfReadOnly: true },
+  { role: 'undo', editFlag: 'canUndo', hideIfReadOnly: true },
+  { role: 'redo', editFlag: 'canRedo', hideIfReadOnly: true },
   { type: 'separator', hideIfReadOnly: true },
-  { role: 'cut', editFlag: 'canCut', accelerator: 'CmdOrCtrl+X', hideIfReadOnly: true },
+  { role: 'cut', editFlag: 'canCut', hideIfReadOnly: true },
   { role: 'copy', editFlag: 'canCopy', accelerator: 'CmdOrCtrl+Insert' },
   { role: 'paste', editFlag: 'canPaste', accelerator: 'Shift+Insert', hideIfReadOnly: true },
   { role: 'delete', editFlag: 'canDelete', hideIfReadOnly: true },
   { type: 'separator' },
-  { role: 'selectall', editFlag: 'canSelectAll', accelerator: 'CmdOrCtrl+A' },
+  { role: 'selectall', editFlag: 'canSelectAll' },
+  { type: 'separator' },
+  { role: 'zoomin', accelerator: 'CmdOrCtrl+=' },
+  { role: 'zoomout', accelerator: 'CmdOrCtrl+-' },
+  { role: 'resetzoom', accelerator: 'CmdOrCtrl+0' },
   { type: 'separator' },
   { role: 'toggledevtools', accelerator: 'CmdOrCtrl+Shift+I' },
   { label: 'Open Process Manager', accelerator: 'Shift+Esc', click: () => openProcessManager() },
@@ -49,20 +54,25 @@ export function showContextMenu(window: BrowserWindow, contextMenu: Electron.Men
     contextMenu.popup({ window });
 }
 
-export function register(window: BrowserWindow, webContents?: WebContents) {
+export function register(window: BrowserWindow, webContents = window.webContents) {
   const contextMenu = electron.Menu.buildFromTemplate(defaultContextMenuTemplate);
-  if(!webContents) webContents = window.webContents;
   webContents.on('context-menu', (e, params) => {
     e.preventDefault();
     showContextMenu(window, contextMenu, params);
   }).on('before-input-event', (e, input) => {
-    if(input.control && input.shift && input.code === 'KeyI') {
+    for(const item of contextMenu.items as CustomMenuItem[]) {
+      if(!item.accelerator)
+        continue;
+      if(!item.modifier)
+        item.modifier = toKeyEvent(item.accelerator);
+      if(input.code !== item.modifier.code ||
+        input.control === !item.modifier.ctrlKey ||
+        input.shift === !item.modifier.shiftKey ||
+        input.alt === !item.modifier.altKey
+      ) continue;
       e.preventDefault();
-      webContents.toggleDevTools();
-    }
-    if(input.shift && input.code === 'Escape') {
-      e.preventDefault();
-      openProcessManager();
+      item.click(e, window, webContents);
+      break;
     }
   });
 }
