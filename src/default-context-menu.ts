@@ -28,13 +28,13 @@ export const defaultContextMenuTemplate: CustomMenuOption[] = [
   { role: 'paste', editFlag: 'canPaste', accelerator: 'Shift+Insert', hideIfReadOnly: true },
   { role: 'delete', editFlag: 'canDelete', hideIfReadOnly: true },
   { type: 'separator' },
-  { role: 'selectall', editFlag: 'canSelectAll' },
+  { role: 'selectAll', editFlag: 'canSelectAll' },
   { type: 'separator' },
-  { role: 'zoomin', accelerator: 'CmdOrCtrl+=' },
-  { role: 'zoomout', accelerator: 'CmdOrCtrl+-' },
-  { role: 'resetzoom', accelerator: 'CmdOrCtrl+0' },
+  { role: 'zoomIn', accelerator: 'CmdOrCtrl+=' },
+  { role: 'zoomOut', accelerator: 'CmdOrCtrl+-' },
+  { role: 'resetZoom', accelerator: 'CmdOrCtrl+0' },
   { type: 'separator' },
-  { role: 'toggledevtools', accelerator: 'CmdOrCtrl+Shift+I' },
+  { role: 'toggleDevTools', accelerator: 'CmdOrCtrl+Shift+I' },
   { label: 'Open Process Manager', accelerator: 'Shift+Esc', click: () => openProcessManager() },
 ];
 

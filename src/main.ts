@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, IpcMessageEvent, shell, WebContents } from 'electron';
+import { app, BrowserWindow, ipcMain, IpcMainEvent, shell, WebContents } from 'electron';
 import { dirname, relative as relativePath, resolve as resolvePath } from 'path';
 import yargs from 'yargs';
 import { configFilePath, loadConfig, reloadConfigPath } from './config';
@@ -182,7 +182,7 @@ else if(!argv.isolated && !app.requestSingleInstanceLock()) {
       args.parse(app.isPackaged ? lArgv.slice(1) : lArgv),
       cwd,
     ));
-  ipcMain.on('ready', (e: IpcMessageEvent) => {
+  ipcMain.on('ready', (e: IpcMainEvent) => {
     const { id } = e.sender;
     readyWindowIds.add(id);
     if(activeReadyWindowId === undefined || focusedWindowId === id)
@@ -195,7 +195,7 @@ else if(!argv.isolated && !app.requestSingleInstanceLock()) {
       e.sender.send('create-terminal', {});
   }).on('show-config', () =>
     shell.openItem(configFilePath),
-  ).on('create-terminal-request', async (e: IpcMessageEvent, options: TerminalLaunchOptions) =>
+  ).on('create-terminal-request', async (e: IpcMainEvent, options: TerminalLaunchOptions) =>
     (await getWindow(true)).send('create-terminal', options),
   );
 }

@@ -1,4 +1,4 @@
-import { IpcMessageEvent, ipcRenderer, remote } from 'electron';
+import { ipcRenderer, IpcRendererEvent, remote } from 'electron';
 import h from 'hyperscript';
 import Module from 'module';
 import { dirname } from 'path';
@@ -118,7 +118,7 @@ function reloadTerminalConfig(options: ITerminalOptions) {
   }
 }
 
-ipcRenderer.on('create-terminal', (e: IpcMessageEvent, options: TerminalLaunchOptions) =>
+ipcRenderer.on('create-terminal', (e, options: TerminalLaunchOptions) =>
   createTab(options),
 );
 

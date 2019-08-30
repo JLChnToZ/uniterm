@@ -14,7 +14,7 @@ packager({
   arch: 'all',
   out: 'dist/',
   icon: 'icons/uniterm',
-  appCopyright: 'Copyright (c) Jeremy Lam "JLChnToZ" 2017-2018.',
+  appCopyright: 'Copyright (c) Jeremy Lam "JLChnToZ" 2017-2019.',
   win32metadata: {
     ProductName: 'uniterm2',
     InternalName: 'uniterm',
@@ -61,4 +61,4 @@ packager({
       );
     }),
   ],
-});
+}).catch(err => console.error('!! Build Failed !!\n\n%s', err.stack || err));
