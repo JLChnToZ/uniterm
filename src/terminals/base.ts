@@ -42,7 +42,7 @@ export abstract class TerminalBase<TPty> extends Duplex {
     fixPath(this.env);
   }
 
-  public spawn() {}
+  public spawn(): void | Promise<void> {}
 
   public _read() {
     if(!this.buffered) return;

@@ -1,4 +1,4 @@
-@import url(/node_modules/xterm/dist/xterm.css);
+@import url(/node_modules/xterm/css/xterm.css);
 
 /* Fallback */
 @font-face {
@@ -96,7 +96,7 @@ body.maximized::after {
   z-index: 10;
   transform: translateY(-85%);
   opacity: 0.5;
-  backdrop-filter: blur(0.1em);
+  backdrop-filter: blur(0.3em);
   background-color: transparent;
 }
 

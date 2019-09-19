@@ -2,8 +2,6 @@ import { FSWatcher, watch } from 'chokidar';
 import { EventEmitter } from 'events';
 import { load } from 'js-yaml';
 import { resolve } from 'path';
-import { setTimeout } from 'timers';
-import { promisify } from 'util';
 import { ITerminalOptions } from 'xterm';
 import { existsAsync, readFileAsync, writeFileAsync } from './pathutils';
 import { electron } from './remote-wrapper';

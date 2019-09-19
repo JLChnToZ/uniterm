@@ -12,6 +12,8 @@
     "downlevelIteration": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
     "paths": {
       "*": ["node_modules/*"]
     }

@@ -5,9 +5,10 @@ import { extname } from 'path';
 import { fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { IDisposable, ITerminalOptions, Terminal } from 'xterm';
-import { fit } from 'xterm/lib/addons/fit/fit';
-import { webLinksInit } from 'xterm/lib/addons/webLinks/webLinks';
+import { FitAddon } from 'xterm-addon-fit';
+import { WebLinksAddon } from 'xterm-addon-web-links';
 import { configFile } from './config';
+import { bind, readonly } from './decorators';
 import { getAsStringAsync, interceptEvent } from './domutils';
 import { TerminalBase } from './terminals/base';
 
@@ -15,6 +16,12 @@ export class Tab implements IDisposable {
   public static get tabCount() {
     return this.tabs.size;
   }
+
+  private get processTitle() {
+    const proc = this.pty && this.pty.process;
+    return proc && proc.trim() || '';
+  }
+
   public static activeTab: Tab;
 
   public static destroyAllTabs() {
@@ -46,11 +53,6 @@ export class Tab implements IDisposable {
     tab.dispose();
   }
 
-  private get processTitle() {
-    const proc = this.pty && this.pty.process;
-    return proc && proc.trim() || '';
-  }
-
   public terminal: Terminal;
   public pty: TerminalBase<unknown>;
   public disposables: IDisposable[];
@@ -61,6 +63,7 @@ export class Tab implements IDisposable {
   public tabContentText: HTMLElement;
   public active: boolean;
   public pause?: boolean;
+  private autoFit: FitAddon;
   private explicitTitle?: boolean;
   private pendingUpdateOptions?: ITerminalOptions;
 
@@ -71,9 +74,10 @@ export class Tab implements IDisposable {
       fontFamily: 'mononoki, monospace',
       cursorBlink: true,
     });
-    webLinksInit(this.terminal, (e, uri) => e.ctrlKey && shell.openExternal(uri), {
+    this.terminal.loadAddon(new WebLinksAddon((e, uri) => e.ctrlKey && shell.openExternal(uri), {
       willLinkActivate: isCtrlKeyOn,
-    });
+    }));
+    this.terminal.loadAddon(this.autoFit = new FitAddon());
     this.disposables = [];
     this.active = true;
     tabContainer.appendChild(this.tabElement = <a className="item"
@@ -87,9 +91,9 @@ export class Tab implements IDisposable {
       }} title="Close Tab">{'\uf655'}</a>
     </a> as HTMLElement);
     this.tabContent = <div
-      ondragenter={this.handleDragOver.bind(this)}
-      ondragover={this.handleDragOver.bind(this)}
-      ondrop={this.handleDrop.bind(this)}
+      ondragenter={this.handleDragOver}
+      ondragover={this.handleDragOver}
+      ondrop={this.handleDrop}
       className="pty-container"
     /> as HTMLElement;
     contentContainer.appendChild(this.tabContent);
@@ -112,19 +116,19 @@ export class Tab implements IDisposable {
     if(pty.path) this.defaultTitle = extname(pty.path);
     this.pty = pty;
     this.disposables.push(
-      this.terminal.addDisposableListener('data', this.handleDataInput.bind(this)),
-      this.terminal.addDisposableListener('resize', ({ cols, rows }) => this.pty.resize(cols, rows)),
-      this.terminal.addDisposableListener('title', title => {
+      this.terminal.onData(this.handleDataInput),
+      this.terminal.onResize(({ cols, rows }) => this.pty.resize(cols, rows)),
+      this.terminal.onTitleChange(title => {
         this.explicitTitle = !!title;
         this.handleTitleChange(title);
       }),
-      attachDisposable(pty, 'data', this.handleDataOutput.bind(this)),
+      attachDisposable(pty, 'data', this.handleDataOutput),
       attachDisposable(pty, 'error', err =>
         this.printDisposableMessage(`Oops... error: ${err.message || err}`)),
       attachDisposable(pty, 'end', this.pause ?
         ((code?: number, signal?: number) =>
           this.printDisposableMessage(`\n\nProgram exits with ${code} ${codeToSignal(signal) || ''}`)) :
-        this.dispose.bind(this)),
+        this.dispose),
     );
     this.pty.resize(this.terminal.cols, this.terminal.rows);
     try {
@@ -150,7 +154,7 @@ export class Tab implements IDisposable {
     }
     this.terminal.writeln(message);
     this.terminal.writeln('Press any key to exit.');
-    this.disposables.push(this.terminal.addDisposableListener('key', this.dispose.bind(this)));
+    this.disposables.push(this.terminal.onKey(this.dispose));
   }
 
   public onEnable() {
@@ -174,9 +178,10 @@ export class Tab implements IDisposable {
         if(tab) tab.handleDisable();
       }
     }
-    fit(this.terminal);
+    this.autoFit.fit();
   }
 
+  @readonly @bind
   public dispose() {
     window.dispatchEvent(new CustomEvent('tabdispose', { detail: this }));
     Tab.tabs.delete(this.tabElement);
@@ -221,6 +226,10 @@ export class Tab implements IDisposable {
       Tab.activeTab.onEnable();
   }
 
+  public fit() {
+    this.autoFit.fit();
+  }
+
   public updateSettings(options: ITerminalOptions) {
     if(!this.active) {
       this.pendingUpdateOptions = options;
@@ -236,6 +245,7 @@ export class Tab implements IDisposable {
     this.active = false;
   }
 
+  @readonly @bind
   private handleTitleChange(title?: string) {
     this.title = title && title.trim() || this.processTitle || this.defaultTitle;
     if(this.tabContentText) {
@@ -245,15 +255,18 @@ export class Tab implements IDisposable {
     if(this.active) setTitle(this.title);
   }
 
+  @readonly @bind
   private handleDataInput(text: string) {
     if(this.pty) this.pty.write(text, 'utf8');
     if(!this.explicitTitle) this.handleTitleChange();
   }
 
+  @readonly @bind
   private handleDataOutput(data: string | Buffer) {
     if(this.terminal) this.terminal.write(Buffer.isBuffer(data) ? data.toString('utf8') : data);
   }
 
+  @readonly @bind
   private handleDragOver(e: DragEvent) {
     interceptEvent(e);
     const { dataTransfer } = e;
@@ -270,6 +283,7 @@ export class Tab implements IDisposable {
     dataTransfer.dropEffect = 'none';
   }
 
+  @readonly @bind
   private async handleDrop(e: DragEvent) {
     interceptEvent(e);
     const result: string[] = [];
@@ -307,7 +321,7 @@ function onFirstTabCreated(terminal: Terminal) {
       if(initialCols! > 0) cols = initialCols;
       if(initialRows! > 0) rows = initialRows;
     }
-    const { actualCellWidth, actualCellHeight } = (terminal as any)._core._renderCoordinator.dimensions;
+    const { actualCellWidth, actualCellHeight } = (terminal as any)._core._renderService.dimensions;
     const { width, height } = window.getComputedStyle(terminal.element.querySelector('.xterm-screen'));
     const browserWindow = remote.getCurrentWindow();
     browserWindow.setSize(
@@ -346,5 +360,5 @@ function updateTerminalOptions(this: Terminal, [key, value]: [keyof ITerminalOpt
 window.addEventListener('close', Tab.destroyAllTabs);
 fromEvent(window, 'resize').pipe(debounceTime(250)).subscribe(() => {
   if(Tab.activeTab && Tab.activeTab.terminal)
-    fit(Tab.activeTab.terminal);
+    Tab.activeTab.fit();
 });

@@ -1,10 +1,9 @@
-import { ipcRenderer, IpcRendererEvent, remote } from 'electron';
+import { ipcRenderer, remote } from 'electron';
 import h from 'hyperscript';
 import Module from 'module';
 import { dirname } from 'path';
 import { resolve as resolvePath } from 'url';
 import { ITerminalOptions } from 'xterm';
-import { fit } from 'xterm/lib/addons/fit/fit';
 import { configFile, events, loadConfig, startWatch } from './config';
 import { interceptDrop, interceptEvent, loadScript } from './domutils';
 import { TerminalLaunchOptions } from './interfaces';
@@ -105,7 +104,7 @@ function reloadTerminalConfig(options: ITerminalOptions) {
   if(Tab.tabCount)
     for(const tab of Tab.allTabs()) {
       tab.updateSettings(options);
-      if(tab.active) fit(tab.terminal);
+      if(tab.active) tab.fit();
     }
   const { style } = document.body;
   if(options.theme) {
@@ -122,13 +121,20 @@ ipcRenderer.on('create-terminal', (e, options: TerminalLaunchOptions) =>
   createTab(options),
 );
 
-window.addEventListener('beforeunload', e => {
-  if(Tab.tabCount > 1 && remote.dialog.showMessageBox(browserWindow, {
+let closeComfirmed = false;
+window.addEventListener('beforeunload', async e => {
+  if(Tab.tabCount <= 1 || closeComfirmed) return;
+  e.preventDefault();
+  e.returnValue = false;
+  if((await remote.dialog.showMessageBox(browserWindow, {
     type: 'question',
     title: 'Exit?',
     message: `There are still ${Tab.tabCount} sessions are opened, do you really want to close?`,
     buttons: ['Yes', 'No'],
-  })) e.returnValue = false;
+  })).response === 0) {
+    closeComfirmed = true;
+    window.close();
+  }
 });
 
 const { body } = document;
