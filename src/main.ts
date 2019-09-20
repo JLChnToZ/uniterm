@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, IpcMainEvent, shell, WebContents } from 'electron';
 import { dirname, relative as relativePath, resolve as resolvePath } from 'path';
 import yargs from 'yargs';
-import { configFilePath, loadConfig, reloadConfigPath } from './config';
+import { configFile, ConfigFile, configFilePath, loadConfig, reloadConfigPath } from './config';
 import { register as registerContextMenu } from './default-context-menu';
 import { TerminalLaunchOptions } from './interfaces';
 import { ensureDirectory, existsAsync, isExeAsync, lstatAsync, tryResolvePath } from './pathutils';
@@ -126,6 +126,8 @@ const argv: yargs.Arguments<Arguments> = app.isPackaged ?
   args.parse(process.argv.slice(1)) :
   args.argv;
 
+let loadConfigPromise: Promise<ConfigFile> | undefined;
+
 (async (userDataPath: string) => {
   if(!userDataPath) return;
   const original = app.getPath('userData');
@@ -163,7 +165,7 @@ else if(!argv.isolated && !app.requestSingleInstanceLock()) {
     app.disableHardwareAcceleration();
   if(argv['disable-domain-blocking-for-3d-apis'])
     app.disableDomainBlockingFor3DAPIs();
-  loadConfig();
+  loadConfigPromise = loadConfig();
   args.exitProcess(false);
   const workingDir = process.cwd();
   process.chdir(dirname(app.getPath('exe')));
@@ -175,7 +177,7 @@ else if(!argv.isolated && !app.requestSingleInstanceLock()) {
       app.quit();
   }).on('activate', () => {
     if(!Object.keys(windows).length)
-      createWindow();
+      loadConfigPromise.then(createWindow);
   });
   if(!argv.isolated)
     app.on('second-instance', (e, lArgv, cwd) => openShell(
@@ -212,6 +214,8 @@ function createWindow() {
     width: 800,
     icon: resolvePath(__dirname, `../icons/uniterm.${process.platform === 'win32' ? 'ico' : 'png'}`),
     frame: false,
+    transparent: configFile && configFile.misc && configFile.misc.vibrancy,
+    backgroundColor: '#00000000',
     titleBarStyle: 'hiddenInset',
     webPreferences: {
       experimentalFeatures: true,
@@ -240,6 +244,12 @@ function createWindow() {
 function getWindow(newWindow?: boolean) {
   if(!newWindow && activeReadyWindowId !== undefined)
     return Promise.resolve(windows[activeReadyWindowId].webContents);
+  if(loadConfigPromise)
+    return loadConfigPromise.then(getNewWindowPromise);
+  return getNewWindowPromise();
+}
+
+function getNewWindowPromise() {
   return new Promise<WebContents>(resolve => {
     const windowId = createWindow();
     if(openingWindows[windowId])

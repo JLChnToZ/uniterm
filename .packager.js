@@ -23,7 +23,7 @@ packager({
     CompanyName: 'Explosive Theorem Lab.',
   },
   asar: {
-    unpackDir: 'node_modules/{wslpty,node-pty,fsevents}',
+    unpackDir: 'node_modules/{wslpty,node-pty,fsevents,electron-vibrancy}',
   },
   ignore: [
     /\.([a-z0-9]*ignore|sln|pdb|md|t?log|ps1|lib|exp|map|tsx?|sass|coffee)$/i,

@@ -2,6 +2,7 @@ import { ipcRenderer, remote } from 'electron';
 import h from 'hyperscript';
 import Module from 'module';
 import { dirname } from 'path';
+import TinyColor from 'tinycolor2';
 import { resolve as resolvePath } from 'url';
 import { ITerminalOptions } from 'xterm';
 import { configFile, events, loadConfig, startWatch } from './config';
@@ -11,7 +12,8 @@ import { existsAsync, isExeAsync, lstatAsync } from './pathutils';
 import { requireLater } from './require-later';
 import { Tab } from './tab';
 import { createBackend, register } from './terminals';
-import { attach as attachWinCtrl } from './winctrl';
+import { checkVibrancy } from './vibrant';
+import { attach as attachWinCtrl, registerDraggableDoubleClick } from './winctrl';
 
 const homePath = remote.app.getPath('home');
 const browserWindow = remote.getCurrentWindow();
@@ -89,12 +91,14 @@ if(process.platform === 'darwin')
   header.insertBefore(<div className="window-control-mac" />, header.firstElementChild);
 else
   attachWinCtrl(header);
+registerDraggableDoubleClick();
 
 events.on('config', () => {
   window.dispatchEvent(new CustomEvent('configreload', {}));
   if(!configFile) return;
   if(configFile.terminal)
     reloadTerminalConfig(configFile.terminal);
+  checkVibrancy(browserWindow);
   if(configFile.mods && configFile.mods.length)
     for(const mod of configFile.mods)
       loadScript(resolvePath('userdata/', mod));
@@ -107,9 +111,13 @@ function reloadTerminalConfig(options: ITerminalOptions) {
       if(tab.active) tab.fit();
     }
   const { style } = document.body;
+  const vibrancy = configFile && configFile.misc && configFile.misc.vibrancy;
   if(options.theme) {
     const { theme } = options;
-    style.backgroundColor = theme.background || 'inherit';
+    let background = theme.background;
+    if(background && !vibrancy)
+      background = TinyColor(background).setAlpha(1).toString();
+    style.backgroundColor = background || 'inherit';
     style.color = theme.foreground || 'inherit';
   } else {
     style.backgroundColor = 'inherit';

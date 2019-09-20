@@ -11,6 +11,7 @@ export interface ConfigFile {
   misc?: {
     initialCols?: number;
     initialRows?: number;
+    vibrancy?: boolean;
   };
   mods?: string[];
 }

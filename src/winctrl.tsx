@@ -3,6 +3,18 @@ import h from 'hyperscript';
 
 const browserWindow = remote.getCurrentWindow();
 
+function doMaximize() {
+  if(browserWindow.isFullScreenable()) {
+    const isFullscreen = browserWindow.isFullScreen();
+    browserWindow.setFullScreen(!isFullscreen);
+    if(isFullscreen)
+      browserWindow.unmaximize();
+  } else if(browserWindow.isMaximized())
+    browserWindow.unmaximize();
+  else
+    browserWindow.maximize();
+}
+
 export function attach(parent: HTMLElement) {
   browserWindow.on('maximize', updateMaximizeState);
   browserWindow.on('unmaximize', updateMaximizeState);
@@ -13,18 +25,7 @@ export function attach(parent: HTMLElement) {
     onclick={() => browserWindow.minimize()}
     title="Minimize">{'\ufaaf'}</a>);
   const maximizeButton = parent.appendChild(<a className="icon item"
-    onclick={() => {
-      if(browserWindow.isFullScreenable()) {
-        const isFullscreen = browserWindow.isFullScreen();
-        browserWindow.setFullScreen(!isFullscreen);
-        if(isFullscreen)
-          browserWindow.unmaximize();
-      } else if(browserWindow.isMaximized())
-        browserWindow.unmaximize();
-      else
-        browserWindow.maximize();
-    }}
-    title="Maximize"
+    onclick={doMaximize} title="Maximize"
   />);
   parent.appendChild(<a className="icon item"
     onclick={() => browserWindow.close()}
@@ -40,4 +41,14 @@ export function attach(parent: HTMLElement) {
       browserWindow.setFullScreen(true);
   }
   updateMaximizeState();
+}
+
+export function registerDraggableDoubleClick() {
+  document.body.addEventListener('dblclick', e => {
+    if((e.target instanceof Element) && e.target.matches('.drag')) {
+      e.preventDefault();
+      e.stopPropagation();
+      doMaximize();
+    }
+  }, true);
 }
