@@ -23,14 +23,14 @@ export abstract class TerminalBase<TPty> extends Duplex {
   public rows: number = 30;
   public env: { [key: string]: string };
   public cwd?: string;
-  public encoding: string = 'utf8';
+  public encoding?: string;
 
   private buffered?: any[];
 
   protected constructor(options?: TerminalOptions) {
     super(options);
     if(options) {
-      this.encoding = options.encoding || 'utf8';
+      this.encoding = options.encoding;
       this.env = Object.assign({}, process.env, options.env);
       this.cols = options.cols || 80;
       this.rows = options.rows || 30;

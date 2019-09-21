@@ -11,7 +11,7 @@ function doMaximize() {
       browserWindow.unmaximize();
   } else if(browserWindow.isMaximized())
     browserWindow.unmaximize();
-  else
+  else if(browserWindow.isMaximizable())
     browserWindow.maximize();
 }
 
@@ -21,13 +21,13 @@ export function attach(parent: HTMLElement) {
   browserWindow.on('restore', updateMaximizeState);
   browserWindow.on('enter-full-screen', updateMaximizeState);
   browserWindow.on('leave-full-screen', updateMaximizeState);
-  parent.appendChild(<a className="icon item"
+  parent.appendChild(<a className="icon minimize item"
     onclick={() => browserWindow.minimize()}
     title="Minimize">{'\ufaaf'}</a>);
-  const maximizeButton = parent.appendChild(<a className="icon item"
+  const maximizeButton = parent.appendChild(<a className="icon maximize item"
     onclick={doMaximize} title="Maximize"
   />);
-  parent.appendChild(<a className="icon item"
+  parent.appendChild(<a className="icon close item"
     onclick={() => browserWindow.close()}
     title="Close">{'\ufaac'}</a>);
   function updateMaximizeState() {
@@ -39,6 +39,9 @@ export function attach(parent: HTMLElement) {
     if(browserWindow.isFullScreenable() &&
       isMaximized && !isFullScreen)
       browserWindow.setFullScreen(true);
+    maximizeButton.classList.remove('disabled');
+    if(!browserWindow.isMaximizable())
+      maximizeButton.classList.add('disabled');
   }
   updateMaximizeState();
 }

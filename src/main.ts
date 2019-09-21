@@ -209,12 +209,17 @@ function printFlagNoEffectWarning(lArgv: Arguments, key: keyof Arguments) {
 }
 
 function createWindow() {
+  const vibrancy = configFile && configFile.misc && configFile.misc.vibrancy;
+  // Hack to disable maximizable as transparent window in Win32 makes maximize bugged.
+  const maximizable = process.platform !== 'win32' || !vibrancy;
   const window = new BrowserWindow({
     height: 600,
     width: 800,
     icon: resolvePath(__dirname, `../icons/uniterm.${process.platform === 'win32' ? 'ico' : 'png'}`),
     frame: false,
-    transparent: configFile && configFile.misc && configFile.misc.vibrancy,
+    transparent: vibrancy,
+    maximizable,
+    fullscreenable: maximizable,
     backgroundColor: '#00000000',
     titleBarStyle: 'hiddenInset',
     webPreferences: {

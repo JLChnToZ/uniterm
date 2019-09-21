@@ -263,7 +263,11 @@ export class Tab implements IDisposable {
 
   @readonly @bind
   private handleDataOutput(data: string | Buffer) {
-    if(this.terminal) this.terminal.write(Buffer.isBuffer(data) ? data.toString('utf8') : data);
+    if(!this.terminal) return;
+    if(Buffer.isBuffer(data))
+      this.terminal.writeUtf8(data);
+    else
+      this.terminal.write(data);
   }
 
   @readonly @bind
@@ -353,8 +357,12 @@ function isCtrlKeyOn(e: MouseEvent) {
 }
 
 function updateTerminalOptions(this: Terminal, [key, value]: [keyof ITerminalOptions, any]) {
-  if(this.getOption(key) !== value)
-    this.setOption(key, value);
+  try {
+    if(this.getOption(key) !== value)
+      this.setOption(key, value);
+  } catch(e) {
+    console.warn(e);
+  }
 }
 
 window.addEventListener('close', Tab.destroyAllTabs);

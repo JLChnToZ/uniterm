@@ -68,6 +68,59 @@ declare module 'electron-process-manager' {
   export function openProcessManager(defaultSorting?: DefaultSorting): void;
 }
 
+declare module 'electron-vibrancy' {
+  export const enum NSVisualEffectMaterial {
+    AppearanceBased = 0,
+    Light = 1,
+    Dark = 2,
+    Titlebar = 3,
+    Selection = 4,
+    Menu = 5,
+    Popover = 6,
+    Sidebar = 7,
+    MediumLight = 8,
+    UltraDark = 9,
+  }
+  export const enum ResizeMask {
+    autoWidth = 0,
+    autoHeight = 1,
+    autoWidthHeight = 3,
+    none = 4,
+  }
+  export interface ViewOptions {
+    Material: NSVisualEffectMaterial;
+    X: number;
+    Y: number;
+    Width: number;
+    Height: number;
+  }
+  export interface AddViewOptions extends ViewOptions {
+    ResizeMask?: ResizeMask;
+  }
+  export interface UpdateViewOptions extends ViewOptions {
+    ViewId: number;
+  }
+  export function SetVibrancy(
+    window: Electron.BrowserWindow,
+    material: NSVisualEffectMaterial,
+  ): number;
+  export function DisableVibrancy(
+    window: Electron.BrowserWindow,
+  ): void;
+  export function AddView(
+    window: Electron.BrowserWindow,
+    options: AddViewOptions,
+  ): number;
+  export function Updateview(
+    window: Electron.BrowserWindow,
+    options: UpdateViewOptions,
+  ): void;
+  export function RemoveView(
+    window: Electron.BrowserWindow,
+    viewId: number,
+  ): void;
+}
+
 declare module 'keyboardevent-from-electron-accelerator' {
   interface IKeyboardEvent {
     code: string;
