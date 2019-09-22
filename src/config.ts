@@ -12,6 +12,7 @@ export interface ConfigFile {
     initialCols?: number;
     initialRows?: number;
     vibrancy?: boolean;
+    transparent?: boolean;
   };
   mods?: string[];
 }

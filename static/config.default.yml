@@ -173,6 +173,10 @@ misc:
     # Also you need to set the background color to transparent or semi-transparent
     # to make this work.
     vibrancy: false # default: false
+    # Enable transparent window
+    # In some cases vibrancy require this to be enabled.
+    # This option only applies to new windows.
+    transparent: false # default: false
 
 # Mod files (*.js), will be loaded into all windows when the config file load/reloads
 # The load path is relative to $relative_path

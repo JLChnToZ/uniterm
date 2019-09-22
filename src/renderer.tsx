@@ -18,6 +18,7 @@ import { attach as attachWinCtrl, registerDraggableDoubleClick } from './winctrl
 const homePath = remote.app.getPath('home');
 const browserWindow = remote.getCurrentWindow();
 
+const dynamicStyle = document.head.appendChild(<style type="text/css" /> as HTMLStyleElement).sheet as CSSStyleSheet;
 const tabContainer = <div className="flex" /> as HTMLDivElement;
 const layoutContainer = document.body.appendChild(<div className="layout-container" /> as HTMLDivElement);
 const header = layoutContainer.appendChild(<div className="header pty-tabs">
@@ -104,25 +105,30 @@ events.on('config', () => {
       loadScript(resolvePath('userdata/', mod));
 });
 
+const colorRuleNormal = (dynamicStyle.cssRules[
+  dynamicStyle.insertRule('html, body {}')
+] as CSSStyleRule).style;
+const colorRuleVibrant = (dynamicStyle.cssRules[
+  dynamicStyle.insertRule('.vibrant:not(.maximized) body {}')
+] as CSSStyleRule).style;
+
+function replaceBodyColor(bgColor?: string, fgColor?: string) {
+  colorRuleNormal.color = fgColor || 'inherit';
+  colorRuleNormal.backgroundColor = bgColor ? TinyColor(bgColor).setAlpha(1).toString() : 'inherit';
+  colorRuleVibrant.backgroundColor = bgColor || 'inherit';
+}
+
 function reloadTerminalConfig(options: ITerminalOptions) {
   if(Tab.tabCount)
     for(const tab of Tab.allTabs()) {
       tab.updateSettings(options);
       if(tab.active) tab.fit();
     }
-  const { style } = document.body;
-  const vibrancy = configFile && configFile.misc && configFile.misc.vibrancy;
   if(options.theme) {
     const { theme } = options;
-    let background = theme.background;
-    if(background && !vibrancy)
-      background = TinyColor(background).setAlpha(1).toString();
-    style.backgroundColor = background || 'inherit';
-    style.color = theme.foreground || 'inherit';
-  } else {
-    style.backgroundColor = 'inherit';
-    style.color = 'inherit';
-  }
+    replaceBodyColor(theme.background, theme.foreground);
+  } else
+    replaceBodyColor();
 }
 
 ipcRenderer.on('create-terminal', (e, options: TerminalLaunchOptions) =>

@@ -22,7 +22,7 @@ html, body {
   padding: 0;
 }
 
-html.vibrant, .vibrant body {
+html.vibrant:not(.maximized), .vibrant:not(.maximized) body {
   background-color: transparent;
 }
 
@@ -53,11 +53,11 @@ body::after {
   pointer-events: none;
 }
 
-body.maximized {
+.maximized body {
   padding-top: 0.4em;
 }
 
-body.maximized::after {
+.maximized body::after {
   display: none;
 }
 

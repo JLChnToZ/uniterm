@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, IpcMainEvent, shell, WebContents } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, WebContents } from 'electron';
 import { dirname, relative as relativePath, resolve as resolvePath } from 'path';
 import yargs from 'yargs';
 import { configFile, ConfigFile, configFilePath, loadConfig, reloadConfigPath } from './config';
@@ -180,11 +180,11 @@ else if(!argv.isolated && !app.requestSingleInstanceLock()) {
       loadConfigPromise.then(createWindow);
   });
   if(!argv.isolated)
-    app.on('second-instance', (e, lArgv, cwd) => openShell(
+    app.on('second-instance', (_, lArgv, cwd) => openShell(
       args.parse(app.isPackaged ? lArgv.slice(1) : lArgv),
       cwd,
     ));
-  ipcMain.on('ready', (e: IpcMainEvent) => {
+  ipcMain.on('ready', e => {
     const { id } = e.sender;
     readyWindowIds.add(id);
     if(activeReadyWindowId === undefined || focusedWindowId === id)
@@ -197,7 +197,7 @@ else if(!argv.isolated && !app.requestSingleInstanceLock()) {
       e.sender.send('create-terminal', {});
   }).on('show-config', () =>
     shell.openItem(configFilePath),
-  ).on('create-terminal-request', async (e: IpcMainEvent, options: TerminalLaunchOptions) =>
+  ).on('create-terminal-request', async (_, options: TerminalLaunchOptions) =>
     (await getWindow(true)).send('create-terminal', options),
   );
 }
@@ -209,15 +209,15 @@ function printFlagNoEffectWarning(lArgv: Arguments, key: keyof Arguments) {
 }
 
 function createWindow() {
-  const vibrancy = configFile && configFile.misc && configFile.misc.vibrancy;
   // Hack to disable maximizable as transparent window in Win32 makes maximize bugged.
-  const maximizable = process.platform !== 'win32' || !vibrancy;
+  const transparent = configFile && configFile.misc && configFile.misc.transparent;
+  const maximizable = process.platform !== 'win32' || !transparent;
   const window = new BrowserWindow({
     height: 600,
     width: 800,
     icon: resolvePath(__dirname, `../icons/uniterm.${process.platform === 'win32' ? 'ico' : 'png'}`),
     frame: false,
-    transparent: vibrancy,
+    transparent,
     maximizable,
     fullscreenable: maximizable,
     backgroundColor: '#00000000',

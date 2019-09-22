@@ -34,8 +34,8 @@ export function attach(parent: HTMLElement) {
     const isFullScreen = browserWindow.isFullScreen();
     const isMaximized = browserWindow.isMaximized() || isFullScreen;
     maximizeButton.textContent = isMaximized ? '\ufab1' : '\ufaae';
-    if(isMaximized) document.body.classList.add('maximized');
-    else document.body.classList.remove('maximized');
+    if(isMaximized) document.documentElement.classList.add('maximized');
+    else document.documentElement.classList.remove('maximized');
     if(browserWindow.isFullScreenable() &&
       isMaximized && !isFullScreen)
       browserWindow.setFullScreen(true);
