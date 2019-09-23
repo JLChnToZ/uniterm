@@ -44,8 +44,13 @@ window.addEventListener('tabswitched', (e: CustomEvent<Tab>) => {
 });
 
 export function toggleSearch() {
-  if(searchBar.classList.toggle('hidden'))
+  if(!searchBar.classList.toggle('hidden')) {
     search.focus();
+    try {
+      const selection = Tab.activeTab.terminal.getSelection();
+      if(selection) search.value = selection;
+    } catch {}
+  }
 }
 
 function attach(tab: Tab) {
