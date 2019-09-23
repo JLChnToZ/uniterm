@@ -2,6 +2,7 @@ import defaultShell from 'default-shell';
 import { IPty, spawn } from 'node-pty';
 import { basename, relative } from 'path';
 import escape from 'shell-escape';
+import { trueCasePath } from 'true-case-path';
 import { whichAsync } from '../pathutils';
 import { electron } from '../remote-wrapper';
 import { ANSI_RESET, TerminalBase, TerminalOptions } from './base';
@@ -29,6 +30,7 @@ export class PtyShell extends TerminalBase<IPty> {
     this.resolvedPath = await whichAsync(this.path);
     if(!relative(exePath, this.resolvedPath))
       throw new Error('Here I am!');
+    this.resolvedPath = await trueCasePath(this.resolvedPath);
     this.pty = spawn(this.resolvedPath,
       this.argv || [], {
       name: basename(this.path),
@@ -39,8 +41,8 @@ export class PtyShell extends TerminalBase<IPty> {
       encoding: this.encoding,
       experimentalUseConpty: this.experimentalUseConpty,
     });
-    this.pty.on('data', data => this._pushData(data));
-    this.pty.on('exit', (code, signal) => this.emit('end', code, signal));
+    this.pty.on('data', this._pushData);
+    this.pty.on('exit', this.emit.bind(this, 'end'));
     this._pushData(ANSI_RESET);
   }
 

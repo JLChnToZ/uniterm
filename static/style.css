@@ -77,9 +77,20 @@ body::after {
   height: 100%;
 }
 
-.header {
+.header, .toolbar {
   display: flex;
   flex-direction: row;
+}
+
+.toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  backdrop-filter: blur(0.3em);
+  background-color: #0008;
+  border-top: solid 1px #FFF8;
 }
 
 .maximized .header, .maximized .header::after {
@@ -118,7 +129,7 @@ body::after {
 
 .maximized .header:hover {
   transform: none;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: #0008;
   transition-delay: 0s;
 }
 
@@ -144,6 +155,23 @@ body::after {
   overflow-x: auto;
   overflow-y: hidden;
   min-width: 0;
+}
+
+.search {
+  outline: none;
+  margin: 0.5em;
+  flex-grow: 1;
+  border: none;
+  background-color: transparent;
+  color: #FFF;
+}
+
+.search::-webkit-input-placeholder {
+  color: #FFFA;
+}
+
+.hidden {
+  display: none;
 }
 
 .window-controls-mac {
@@ -176,6 +204,11 @@ body::after {
   mix-blend-mode: exclusion;
 }
 
+.toolbar .item::before {
+  bottom: initial;
+  top: 0;
+}
+
 .icon.item {
   mix-blend-mode: exclusion;
 }
@@ -195,7 +228,7 @@ body::after {
 }
 
 .item:not(.disabled):hover {
-  background-color: rgba(255,255,255,0.5);
+  background-color: #FFF8;
 }
 
 .item:not(.disabled):active {
@@ -209,7 +242,7 @@ body::after {
 
 .active.item::before {
   transform: scale(1, 1);
-  border-bottom-color: rgba(255,255,255,0.75);
+  border-bottom-color: #FFFC;
 }
 
 .icon.item {
@@ -280,7 +313,7 @@ img[src^='fileicon://'] {
 }
 
 ::-webkit-scrollbar-track:hover {
-  background-color: rgba(128,128,128,0.25);
+  background-color: #8884;
   border-radius: 1em;
 }
 
@@ -297,9 +330,9 @@ img[src^='fileicon://'] {
 :active::-webkit-scrollbar-thumb,
 :active>::-webkit-scrollbar-thumb,
 .focus ::-webkit-scrollbar-thumb {
-	background-color: rgba(128,128,128,0.5);
+	background-color: #8888;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background-color: rgba(128,128,128,0.75);
+	background-color: #888C;
 }

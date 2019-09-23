@@ -1,7 +1,7 @@
 import codeToSignal = require('code-to-signal');
 import { clipboard, remote, shell } from 'electron';
 import h from 'hyperscript';
-import { extname } from 'path';
+import { basename } from 'path';
 import { fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { IDisposable, ITerminalOptions, Terminal } from 'xterm';
@@ -113,7 +113,7 @@ export class Tab implements IDisposable {
 
   public async attach(pty: TerminalBase<unknown>) {
     if(this.pty || !this.terminal) return;
-    if(pty.path) this.defaultTitle = extname(pty.path);
+    if(pty.path) this.defaultTitle = basename(pty.path);
     this.pty = pty;
     this.disposables.push(
       this.terminal.onData(this.handleDataInput),
@@ -179,6 +179,7 @@ export class Tab implements IDisposable {
       }
     }
     this.autoFit.fit();
+    window.dispatchEvent(new CustomEvent('tabswitched', { detail: this }));
   }
 
   @readonly @bind

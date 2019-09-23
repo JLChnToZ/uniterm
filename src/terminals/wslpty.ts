@@ -61,9 +61,9 @@ export class WslPtyShell extends TerminalBase<IPty> {
       cols: this.cols,
       rows: this.rows,
     });
-    this.pty.on('data', data => this._pushData(data));
-    this.pty.on('error', err => this.emit('error', err));
-    this.pty.on('exit', () => this.emit('end'));
+    this.pty.on('data', this._pushData);
+    this.pty.on('error', this.emit.bind(this, 'error'));
+    this.pty.on('exit', this.emit.bind(this, 'end'));
     this._pushData(ANSI_RESET);
     if(this.path)
       this.pty.write(`${this.path} ${this.argv && escape(this.argv) || ''}\r\n`);

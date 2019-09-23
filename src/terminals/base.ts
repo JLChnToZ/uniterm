@@ -1,4 +1,5 @@
 import { Duplex, DuplexOptions } from 'stream';
+import { bind, readonly } from '../decorators';
 import { fixPath } from '../pathutils';
 
 export const ANSI_CLS: string = '\x1b[2J\x1b[1;1H';
@@ -61,6 +62,7 @@ export abstract class TerminalBase<TPty> extends Duplex {
 
   public dropFiles(file: string[]) {}
 
+  @readonly @bind
   protected _pushData(data: any) {
     if(this.buffered)
       this.buffered.push(data);

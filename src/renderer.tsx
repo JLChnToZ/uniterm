@@ -10,6 +10,7 @@ import { interceptDrop, interceptEvent, loadScript } from './domutils';
 import { TerminalLaunchOptions } from './interfaces';
 import { existsAsync, isExeAsync, lstatAsync } from './pathutils';
 import { requireLater } from './require-later';
+import { toggleSearch } from './search';
 import { Tab } from './tab';
 import { createBackend, register } from './terminals';
 import { checkVibrancy } from './vibrant';
@@ -58,6 +59,7 @@ const header = layoutContainer.appendChild(<div className="header pty-tabs">
     e.dataTransfer.clearData();
   }} title="Add Tab">{'\uf914'}</a>
   <div className="drag" />
+  <a className="icon item" onclick={toggleSearch} title="Search">{'\uf848'}</a>
   <a className="icon item" onclick={() => ipcRenderer.send('show-config')} title="Config">{'\uf085'}</a>
 </div> as HTMLDivElement);
 
