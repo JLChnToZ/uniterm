@@ -83,7 +83,7 @@ export class Tab implements IDisposable {
     tabContainer.appendChild(this.tabElement = <a className="item"
       onclick={Tab.handleTabClick}
       onmouseup={Tab.handleTabMouseUp}>
-      <span className="icon">{'\uf120'}</span>
+      <span className="icon">{'\ufbab'}</span>
       {this.tabContentText = <span className="title-text" /> as HTMLElement}
       <a className="close icon" onclick={e => {
         e.preventDefault();
@@ -127,7 +127,7 @@ export class Tab implements IDisposable {
         this.printDisposableMessage(`Oops... error: ${err.message || err}`)),
       attachDisposable(pty, 'end', this.pause ?
         ((code?: number, signal?: number) =>
-          this.printDisposableMessage(`\n\nProgram exits with ${code} ${codeToSignal(signal) || ''}`)) :
+          this.printDisposableMessage(`Program exits with ${code} ${codeToSignal(signal) || ''}`, false)) :
         this.dispose),
     );
     this.pty.resize(this.terminal.cols, this.terminal.rows);
@@ -142,18 +142,27 @@ export class Tab implements IDisposable {
     this.tabElement.insertBefore(
       (this.pty && this.pty.resolvedPath) ?
       <img src={`fileicon://${this.pty.resolvedPath}:small.png`} /> :
-      <span className="icon">{'\uf120'}</span>,
+      <span className="icon">{'\uf68c'}</span>,
       this.tabElement.firstChild,
     );
   }
 
   public printDisposableMessage(message: string, isError: boolean = true) {
-    if(!this.terminal && isError) {
-      remote.dialog.showErrorBox('Error', message);
+    if(!this.terminal) {
+      if(isError)
+        remote.dialog.showErrorBox('Error', message);
       return;
     }
-    this.terminal.writeln(message);
-    this.terminal.writeln('Press any key to exit.');
+    let icon = this.tabElement.firstChild as HTMLElement;
+    if(!icon.classList.contains('icon')) {
+      icon.remove();
+      icon = this.tabElement.insertBefore(
+        <span className="icon" /> as HTMLElement,
+        this.tabElement.firstChild,
+      );
+    }
+    icon.textContent = isError ? '\ufb99' : '\uf705';
+    this.terminal.writeln(`\r\n\r\nUniterm: ${message}\r\nPress any key to close this tab.`);
     this.disposables.push(this.terminal.onKey(this.dispose));
   }
 

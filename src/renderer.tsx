@@ -60,7 +60,7 @@ const header = layoutContainer.appendChild(<div className="header pty-tabs">
   }} title="Add Tab">{'\uf914'}</a>
   <div className="drag" />
   <a className="icon item" onclick={toggleSearch} title="Search">{'\uf848'}</a>
-  <a className="icon item" onclick={() => ipcRenderer.send('show-config')} title="Config">{'\uf085'}</a>
+  <a className="icon item" onclick={() => ipcRenderer.send('show-config')} title="Config">{'\uf992'}</a>
 </div> as HTMLDivElement);
 
 async function createTab(options: TerminalLaunchOptions, newWindow?: boolean) {
@@ -73,7 +73,7 @@ async function createTab(options: TerminalLaunchOptions, newWindow?: boolean) {
   try {
     tab.attach(createBackend(options));
   } catch(e) {
-    tab.printDisposableMessage(`Error while creating backend: ${e.message || e}`, true);
+    tab.printDisposableMessage(`Error while creating backend: ${e.message || e}`);
   }
   browserWindow.focus();
 }
