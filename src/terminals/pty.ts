@@ -27,7 +27,7 @@ export class PtyShell extends TerminalBase<IPty> {
 
   public async spawn() {
     if(this.pty) return;
-    this.resolvedPath = await whichAsync(this.path);
+    this.resolvedPath = await whichAsync(this.path) as string;
     if(!relative(exePath, this.resolvedPath))
       throw new Error('Here I am!');
     this.resolvedPath = await trueCasePath(this.resolvedPath);
@@ -39,7 +39,7 @@ export class PtyShell extends TerminalBase<IPty> {
       cols: this.cols,
       rows: this.rows,
       encoding: this.encoding,
-      experimentalUseConpty: this.experimentalUseConpty,
+      useConpty: this.experimentalUseConpty,
     });
     this.pty.on('data', this._pushData);
     this.pty.on('exit', this.emit.bind(this, 'end'));

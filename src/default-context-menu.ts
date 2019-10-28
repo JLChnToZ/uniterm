@@ -64,7 +64,7 @@ export function register(window: BrowserWindow, webContents = window.webContents
       if(!item.accelerator)
         continue;
       if(!item.modifier)
-        item.modifier = toKeyEvent(item.accelerator);
+        item.modifier = toKeyEvent(item.accelerator as string);
       if(input.code !== item.modifier.code ||
         input.control === !item.modifier.ctrlKey ||
         input.shift === !item.modifier.shiftKey ||

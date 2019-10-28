@@ -33,7 +33,7 @@ export class UACClient extends TerminalBase<EncodeStream> {
   public async spawn() {
     const path = this.path || defaultShell;
     this.process = `SUDO: ${basename(path)}`;
-    this.resolvedPath = await whichAsync(path);
+    this.resolvedPath = await whichAsync(path) as string;
     // Create a named pipe for IPC between clones.
     const pipe = `uniterm-${process.pid}-${(await randomBytesAsync(16)).toString('hex')}`;
     createServer()
