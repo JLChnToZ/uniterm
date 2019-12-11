@@ -34,7 +34,7 @@ function resolveAndLogError(e: any): undefined {
   return undefined;
 }
 
-function handleAppProtocol(request: Electron.HandlerRequest) {
+function handleAppProtocol(request: Electron.Request) {
   if(!request.url.startsWith('uniterm://app/'))
     return;
   const url = parse(request.url).pathname;
@@ -52,7 +52,7 @@ function handleAppProtocol(request: Electron.HandlerRequest) {
   Supported formats: png(default) / jpg
   If omitted extension or size indicators, will default to medium png format.
 */
-async function handleFileProtocol(request: Electron.HandlerRequest): Promise<Electron.MimeTypedBuffer> {
+async function handleFileProtocol(request: Electron.Request): Promise<Electron.MimeTypedBuffer> {
   const match = /^fileicon:\/\/(.+?)(?:[@_:\.-](small|medium|large))?(?:\.(png|jpe?g))?$/i
     .exec(request.url);
   if(!match) return;
