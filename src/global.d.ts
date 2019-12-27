@@ -138,3 +138,8 @@ declare module 'keyboardevent-from-electron-accelerator' {
   export function reduceCode(state: IState, event: IKeyboardEvent): IState;
   export function toKeyEvent(accelerator: string): IKeyboardEvent;
 }
+
+declare module 'argv-split' {
+  function argvSplit(argv: string): string[];
+  export = argvSplit;
+}

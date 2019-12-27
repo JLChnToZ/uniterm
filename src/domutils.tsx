@@ -20,3 +20,16 @@ export function interceptDrop(e: DragEvent) {
   interceptEvent(e);
   e.dataTransfer.dropEffect = 'none';
 }
+
+export function acceptFileDrop(e: DragEvent) {
+  interceptEvent(e);
+  const { dataTransfer } = e;
+  for(const type of dataTransfer.types)
+    switch(type) {
+      case 'Files':
+        dataTransfer.dropEffect = 'link';
+        return;
+    }
+  dataTransfer.dropEffect = 'none';
+}
+

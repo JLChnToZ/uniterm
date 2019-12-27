@@ -29,3 +29,7 @@ export function shiftPath(options: TerminalOptions) {
     delete options.path;
   return options;
 }
+
+export function hasBackend(name: string) {
+  return registered.has(name);
+}

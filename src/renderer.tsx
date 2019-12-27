@@ -5,8 +5,9 @@ import { dirname } from 'path';
 import TinyColor from 'tinycolor2';
 import { resolve as resolvePath } from 'url';
 import { ITerminalOptions } from 'xterm';
+import { init as initOpen, toggleOpen } from './advanced-open';
 import { configFile, events, loadConfig, startWatch } from './config';
-import { interceptDrop, interceptEvent, loadScript } from './domutils';
+import { acceptFileDrop, interceptDrop, interceptEvent, loadScript } from './domutils';
 import { TerminalLaunchOptions } from './interfaces';
 import { existsAsync, isExeAsync, lstatAsync } from './pathutils';
 import { requireLater } from './require-later';
@@ -29,6 +30,10 @@ const header = layoutContainer.appendChild(<div className="header pty-tabs">
       if(e.button !== 1) return;
       e.preventDefault();
       createTab({ cwd: homePath }, true);
+    }}
+    oncontextmenu={e => {
+      e.preventDefault();
+      toggleOpen();
     }}
     ondragenter={acceptFileDrop} ondragover={acceptFileDrop} ondrop={async e => {
     interceptEvent(e);
@@ -76,18 +81,6 @@ async function createTab(options: TerminalLaunchOptions, newWindow?: boolean) {
     tab.printDisposableMessage(`Error while creating backend: ${e.message || e}`);
   }
   browserWindow.focus();
-}
-
-function acceptFileDrop(e: DragEvent) {
-  interceptEvent(e);
-  const { dataTransfer } = e;
-  for(const type of dataTransfer.types)
-    switch(type) {
-      case 'Files':
-        dataTransfer.dropEffect = 'link';
-        return;
-    }
-  dataTransfer.dropEffect = 'none';
 }
 
 if(process.platform === 'darwin')
@@ -167,6 +160,7 @@ else
   ipcRenderer.send('ready');
 
 startWatch();
+initOpen(createTab);
 
 // Expose everything for mods, except for requirable stuffs
 const fakePath = resolvePath(__dirname + '/', '../__renderer');
