@@ -30,7 +30,7 @@ const searchBar = document.body.appendChild(
     }>{'\uf950'}</a>
     <a className="icon item" title="Find Previous" onclick={() => doSearch(false)}>{'\uf55c'}</a>
     <a className="icon item" title="Find Next" onclick={() => doSearch(true)}>{'\uf544'}</a>
-    <a className="icon item" title="Hide" onclick={toggleSearch}>{'\uf85c'}</a>
+    <a className="icon item" title="Hide" onclick={toggleSearch}>{'\uf85f'}</a>
   </div> as HTMLDivElement,
 );
 

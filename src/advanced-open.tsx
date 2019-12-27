@@ -53,7 +53,7 @@ const launchBar = document.body.appendChild(
     }>{'\uf8e7'}</a>
     <a className="icon item" title="Launch" onclick={() => doLaunch(false)}>{'\ufc5a'}</a>
     <a className="icon item" title="Launch in New Window" onclick={() => doLaunch(true)}>{'\ufab0'}</a>
-    <a className="icon item" title="Hide" onclick={toggleOpen}>{'\uf85c'}</a>
+    <a className="icon item" title="Hide" onclick={toggleOpen}>{'\uf85f'}</a>
   </div> as HTMLDivElement,
 );
 
