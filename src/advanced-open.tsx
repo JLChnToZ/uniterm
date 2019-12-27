@@ -2,6 +2,7 @@ import argvSplit from 'argv-split';
 import defaultShell from 'default-shell';
 import { remote } from 'electron';
 import h from 'hyperscript';
+import { dump as dumpYaml, load as loadYaml } from 'js-yaml';
 import { delimiter } from 'path';
 import { acceptFileDrop, interceptEvent } from './domutils';
 import { TerminalLaunchOptions } from './interfaces';
@@ -11,6 +12,7 @@ let launch: HTMLInputElement;
 let pause = false;
 let createTab: ((options: TerminalLaunchOptions, newWindow?: boolean) => void) | undefined;
 let cwd = remote.app.getPath('home');
+let env: any;
 const launchBar = document.body.appendChild(
   <div className="toolbar hidden">
     <a className="icon item" title="Select Shell" onclick={selectShell}>{'\uf68c'}</a>
@@ -48,13 +50,24 @@ const launchBar = document.body.appendChild(
       e.dataTransfer.clearData();
     }} /> as HTMLInputElement}
     <a className="icon item" title="Change Working Directory" onclick={selectCWD}>{'\uf751'}</a>
+    <a className="icon item" title="Environment Variables" onclick={toggleEnvPrompt}>{'\ufb2d'}</a>
     <a className="icon item" title="Auto Pause" onclick={e =>
       pause = (e.target as HTMLElement).classList.toggle('active')
     }>{'\uf8e7'}</a>
-    <a className="icon item" title="Launch" onclick={() => doLaunch(false)}>{'\ufc5a'}</a>
+    <a className="icon item" title="Launch in New Tab" onclick={() => doLaunch(false)}>{'\ufc5a'}</a>
     <a className="icon item" title="Launch in New Window" onclick={() => doLaunch(true)}>{'\ufab0'}</a>
     <a className="icon item" title="Hide" onclick={toggleOpen}>{'\uf85f'}</a>
   </div> as HTMLDivElement,
+);
+const envControl = document.body.appendChild(
+  <textarea className="hidden prompt-field" onkeydown={e => {
+    switch(e.which) {
+      default: return;
+      case 27: /* Escape */ toggleEnvPrompt(); break;
+    }
+    e.preventDefault();
+  }}
+  /> as HTMLTextAreaElement,
 );
 
 async function selectShell() {
@@ -91,9 +104,28 @@ async function selectCWD() {
 export function toggleOpen() {
   if(!launchBar.classList.toggle('hidden')) {
     cwd = remote.app.getPath('home');
+    env = Object.assign({}, process.env);
     launch.value = '';
     launch.focus();
   }
+}
+
+function toggleEnvPrompt() {
+    if(envControl.classList.toggle('hidden'))
+      try {
+        env = loadYaml(envControl.value);
+      } catch {
+        env = Object.assign({}, process.env);
+      }
+    else
+      try {
+        envControl.value = `# Press Esc to Quit Edit Mode.\n\n${dumpYaml(env, {
+          indent: 2,
+        })}`;
+      } catch {
+      } finally {
+        envControl.focus();
+      }
 }
 
 export function init(fn: (options: TerminalLaunchOptions, newWindow?: boolean) => void) {
@@ -121,5 +153,6 @@ async function doLaunch(newWindow: boolean) {
     argv: pathInfo && pathInfo.argv,
     cwd,
     pause,
+    env,
   }, newWindow);
 }
