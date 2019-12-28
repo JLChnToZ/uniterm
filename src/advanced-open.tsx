@@ -13,6 +13,7 @@ let pause = false;
 let createTab: ((options: TerminalLaunchOptions, newWindow?: boolean) => void) | undefined;
 let cwd = remote.app.getPath('home');
 let env: any;
+let tempEnv: any;
 const launchBar = document.body.appendChild(
   <div className="toolbar hidden">
     <a className="icon item" title="Select Shell" onclick={selectShell}>{'\uf68c'}</a>
@@ -104,28 +105,34 @@ async function selectCWD() {
 export function toggleOpen() {
   if(!launchBar.classList.toggle('hidden')) {
     cwd = remote.app.getPath('home');
-    env = Object.assign({}, process.env);
+    tempEnv = env = undefined;
     launch.value = '';
     launch.focus();
   }
 }
 
 function toggleEnvPrompt() {
-    if(envControl.classList.toggle('hidden'))
-      try {
-        env = loadYaml(envControl.value);
-      } catch {
-        env = Object.assign({}, process.env);
-      }
-    else
-      try {
-        envControl.value = `# Press Esc to Quit Edit Mode.\n\n${dumpYaml(env, {
-          indent: 2,
-        })}`;
-      } catch {
-      } finally {
-        envControl.focus();
-      }
+  if(envControl.classList.toggle('hidden'))
+    try {
+      env = undefined;
+      tempEnv = loadYaml(envControl.value);
+      for(const key in tempEnv)
+        if(process.env[key] !== tempEnv[key]) {
+          if(!env) env = {};
+          env[key] = tempEnv[key];
+        }
+    } catch {
+    }
+  else
+    try {
+      if(!tempEnv) tempEnv = process.env;
+      envControl.value = `# Press Esc to Quit Edit Mode.\n\n${dumpYaml(tempEnv, {
+        indent: 2,
+      })}`;
+    } catch {
+    } finally {
+      envControl.focus();
+    }
 }
 
 export function init(fn: (options: TerminalLaunchOptions, newWindow?: boolean) => void) {

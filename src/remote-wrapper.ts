@@ -1,12 +1,11 @@
-import main from 'electron';
-import { MainInterface, remote } from 'electron';
+import Electron, { MainInterface, remote } from 'electron';
 
 export const electron: MainInterface = {} as any;
 
 // Clone electron namespace
 if(remote)
   assignProperties(electron, remote);
-assignProperties(electron, main);
+assignProperties(electron, Electron);
 
 function assignProperties(src: any, target: any) {
   const props = Object.getOwnPropertyDescriptors(target);

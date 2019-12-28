@@ -13,6 +13,7 @@ export class WslPtyShell extends TerminalBase<IPty> {
     if(options && options.env) {
       const { env } = options;
       const keys = new Map<string, string>();
+      let explicitSetPath = false;
 
       // Capitalize variable names
       for(const key of Object.keys(env)) {
@@ -30,17 +31,30 @@ export class WslPtyShell extends TerminalBase<IPty> {
         for(const keyFlag of wslenv)
           if(keyFlag.indexOf('/') >= 0) {
             const [key, ...flags] = keyFlag.split('/');
+            const KEY = key.toUpperCase();
             const flagSet = new Set<string>(flags);
-            const addedFlags = keys.get(key);
+            const addedFlags = keys.get(KEY);
             if(addedFlags) [...addedFlags].forEach(flagSet.add, flagSet);
-            if(flagSet.size) keys.set(key, [...flagSet].join(''));
-            else keys.set(key, '');
-          } else if(!keys.has(keyFlag))
-            keys.set(keyFlag, '');
+            if(flagSet.size) keys.set(KEY, [...flagSet].join(''));
+            else keys.set(KEY, '');
+            if(KEY === 'PATH')
+              explicitSetPath = true;
+          } else {
+            const KEY = keyFlag.toUpperCase();
+            if(!keys.has(KEY)) {
+              keys.set(KEY, '');
+              if(KEY === 'PATH')
+                explicitSetPath = true;
+            }
+          }
       }
 
       // No need to reference WSLENV within keys
       keys.delete('WSLENV');
+
+      // Opt-out path variable if not explicit setted.
+      if(!explicitSetPath)
+        keys.delete('PATH');
 
       // Pass back to wslenv
       if(keys.size) {
