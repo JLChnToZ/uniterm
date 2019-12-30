@@ -12,12 +12,14 @@ export interface TerminalOptions extends DuplexOptions {
   rows?: number;
   env?: { [key: string]: string };
   cwd?: string;
+  _rawPath?: string;
 }
 
 export abstract class TerminalBase<TPty> extends Duplex {
   public process?: string;
   public pty?: TPty;
   public path?: string;
+  public rawPath?: string;
   public resolvedPath?: string;
   public argv?: string[];
   public cols: number = 80;
@@ -36,6 +38,7 @@ export abstract class TerminalBase<TPty> extends Duplex {
       this.cols = options.cols || 80;
       this.rows = options.rows || 30;
       this.path = options.path;
+      this.rawPath = options._rawPath || '';
       this.argv = options.argv;
       this.cwd = options.cwd;
     } else

@@ -4,9 +4,12 @@ import { remote } from 'electron';
 import h from 'hyperscript';
 import { dump as dumpYaml, load as loadYaml } from 'js-yaml';
 import { delimiter } from 'path';
-import { acceptFileDrop, interceptEvent } from './domutils';
+import escape from 'shell-escape';
+import { draggingTab } from './dndtabs';
+import { interceptEvent } from './domutils';
 import { TerminalLaunchOptions } from './interfaces';
 import { existsAsync, isExeAsync, lstatAsync } from './pathutils';
+import { Tab } from './tab';
 
 let launch: HTMLInputElement;
 let pause = false;
@@ -24,30 +27,38 @@ const launchBar = document.body.appendChild(
         case 13: /* Enter */ doLaunch(e.shiftKey); break;
       }
       e.preventDefault();
-    }} ondragenter={acceptFileDrop} ondragover={acceptFileDrop} ondrop={async e => {
-      interceptEvent(e);
-      const { items } = e.dataTransfer;
-      if(items && items.length) {
-        // tslint:disable-next-line:prefer-for-of
-        for(let i = 0; i < items.length; i++) {
-          const item = items[i];
-          switch(item.kind) {
-            case 'file': {
-              const path = item.getAsFile().path;
-              if(!await existsAsync(path))
-                break;
-              if((await lstatAsync(path)).isDirectory()) {
-                cwd = path;
+    }} ondragenter={acceptDrop} ondragover={acceptDrop} ondrop={e => {
+      let intercept = false;
+      if(draggingTab) {
+        const tab = Tab.find(draggingTab);
+        if(tab && tab.pty) {
+          const { pty } = tab;
+          const args: string[] = [];
+          if(pty.rawPath) args.push(pty.rawPath);
+          args.push(pty.path, ...pty.argv);
+          launch.value = escape(args);
+          cwd = pty.cwd;
+          tempEnv = env = pty.env;
+          intercept = true;
+        }
+      } else {
+        const { items } = e.dataTransfer;
+        if(items && items.length) {
+          // tslint:disable-next-line:prefer-for-of
+          for(let i = 0; i < items.length; i++) {
+            const item = items[i];
+            switch(item.kind) {
+              case 'file': {
+                checkAndDropFile(item);
+                intercept = true;
                 break;
               }
-              if(await isExeAsync(path))
-                launch.value = path;
-              break;
             }
           }
+          items.clear();
         }
-        items.clear();
       }
+      if(intercept) interceptEvent(e);
       e.dataTransfer.clearData();
     }} /> as HTMLInputElement}
     <a className="icon item" title="Change Working Directory" onclick={selectCWD}>{'\uf751'}</a>
@@ -102,6 +113,18 @@ async function selectCWD() {
   cwd = result.filePaths[0];
 }
 
+async function checkAndDropFile(item: DataTransferItem) {
+  const path = item.getAsFile().path;
+  if(!await existsAsync(path))
+    return;
+  if((await lstatAsync(path)).isDirectory()) {
+    cwd = path;
+    return;
+  }
+  if(await isExeAsync(path))
+    launch.value = path;
+}
+
 export function toggleOpen() {
   if(!launchBar.classList.toggle('hidden')) {
     cwd = remote.app.getPath('home');
@@ -109,6 +132,25 @@ export function toggleOpen() {
     launch.value = '';
     launch.focus();
   }
+}
+
+function acceptDrop(e: DragEvent) {
+  interceptEvent(e);
+  const { dataTransfer } = e;
+  if(draggingTab) {
+    dataTransfer.dropEffect = 'copy';
+    return;
+  }
+  for(const type of dataTransfer.types)
+    switch(type) {
+      case 'Files':
+        dataTransfer.dropEffect = 'link';
+        return;
+      case 'text':
+        dataTransfer.dropEffect = e.ctrlKey ? 'copy' : 'move';
+        return;
+    }
+  dataTransfer.dropEffect = 'none';
 }
 
 function toggleEnvPrompt() {

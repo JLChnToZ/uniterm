@@ -27,12 +27,12 @@
   },
   "homepage": "https://github.com/JLChnToZ/uniterm#readme",
   "devDependencies": {
-    "electron": "^7.1.4",
+    "electron": "^7.1.7",
     "electron-packager": "^14.1.1",
     "electron-prebuilt-compile": "^4.0.0",
     "electron-rebuild": "^1.8.8",
     "tslint": "^5.20.1",
-    "typescript": "^3.7.3"
+    "typescript": "^3.7.4"
   },
   "dependencies": {
     "@types/chokidar": "^2.1.3",
@@ -47,7 +47,7 @@
     "@types/yargs": "^13.0.3",
     "about-window": "^1.13.2",
     "argv-split": "^2.0.1",
-    "chokidar": "^3.3.0",
+    "chokidar": "^3.3.1",
     "code-to-signal": "^1.0.2",
     "default-shell": "^1.0.1",
     "electron-process-manager": "^1.0.0",
@@ -59,7 +59,7 @@
     "lazy-initializer": "^0.3.1",
     "msgpack-lite": "^0.1.26",
     "node-pty": "^0.9.0",
-    "rxjs": "^6.5.3",
+    "rxjs": "^6.5.4",
     "shell-escape": "^0.2.0",
     "tinycolor2": "^1.4.1",
     "true-case-path": "^2.2.1",

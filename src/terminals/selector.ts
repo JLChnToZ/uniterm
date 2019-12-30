@@ -22,6 +22,7 @@ export function createBackend(options: TerminalOptions): TerminalBase<unknown> {
 }
 
 export function shiftPath(options: TerminalOptions) {
+  options._rawPath = options.path;
   if(options.argv) {
     options.path = options.argv[0];
     options.argv = options.argv.slice(1);

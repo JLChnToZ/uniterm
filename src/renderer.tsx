@@ -7,6 +7,7 @@ import { resolve as resolvePath } from 'url';
 import { ITerminalOptions } from 'xterm';
 import { init as initOpen, toggleOpen } from './advanced-open';
 import { configFile, events, loadConfig, startWatch } from './config';
+import { init as initDraggable } from './dndtabs';
 import { acceptFileDrop, interceptDrop, interceptEvent, loadScript } from './domutils';
 import { TerminalLaunchOptions } from './interfaces';
 import { existsAsync, isExeAsync, lstatAsync } from './pathutils';
@@ -161,6 +162,7 @@ else
 
 startWatch();
 initOpen(createTab);
+initDraggable(tabContainer);
 
 // Expose everything for mods, except for requirable stuffs
 const fakePath = resolvePath(__dirname + '/', '../__renderer');
