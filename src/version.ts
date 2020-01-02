@@ -2,7 +2,7 @@ import showAboutWindow from 'about-window';
 import { readFileSync } from 'fs';
 import { IPackageJSON } from 'gist-package-json';
 import { dirname, resolve as resolvePath } from 'path';
-import { defaultContextMenuTemplate, register as registerMenu } from './default-context-menu';
+import { defaultContextMenuTemplateBase, register as registerMenu } from './default-context-menu';
 import { electron } from './remote-wrapper';
 
 export const rootPath = resolvePath(__dirname, '..');
@@ -48,7 +48,7 @@ function preventNavigate(e: Electron.Event, url: string) {
   electron.shell.openExternal(url);
 }
 
-defaultContextMenuTemplate.push(
+defaultContextMenuTemplateBase.push(
   { type: 'separator' },
   { role: 'about', click: showAbout },
 );

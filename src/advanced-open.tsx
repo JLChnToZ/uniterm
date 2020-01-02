@@ -168,11 +168,12 @@ function toggleEnvPrompt() {
   else
     try {
       if(!tempEnv) tempEnv = process.env;
-      envControl.value = `# Press Esc to Quit Edit Mode.\n\n${dumpYaml(tempEnv, {
+      envControl.value = `# Press <ESC> to quit edit mode.\n# Only modified or new values will be passed to new session, others will remain as-is.\n\n${dumpYaml(tempEnv, {
         indent: 2,
       })}`;
     } catch {
     } finally {
+      envControl.setSelectionRange(0, 0);
       envControl.focus();
     }
 }
