@@ -21,6 +21,9 @@ module.exports = {
       /readme[^\\\/]*$/i,
       /(^|[\\\/])\.[^\\\/]*$/i,
     ],
+    asar: {
+      unpackDir: 'node_modules/wslpty/backend/**/*',
+    },
     afterExtract: [
       require('./create-wsl'),
     ]
@@ -34,9 +37,6 @@ module.exports = {
     },
     {
       name: '@electron-forge/maker-zip',
-      platforms: [
-        'darwin',
-      ],
     },
     {
       name: '@electron-forge/maker-deb',
@@ -46,5 +46,8 @@ module.exports = {
       name: '@electron-forge/maker-rpm',
       config: {},
     },
+  ],
+  plugins: [
+    ['@electron-forge/plugin-auto-unpack-natives']
   ],
 };

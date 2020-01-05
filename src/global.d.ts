@@ -68,7 +68,7 @@ declare module 'electron-process-manager' {
   export function openProcessManager(defaultSorting?: DefaultSorting): void;
 }
 
-declare module 'electron-vibrancy' {
+declare module '@jlchntoz/electron-vibrancy' {
   export const enum NSVisualEffectMaterial {
     AppearanceBased = 0,
     Light = 1,
