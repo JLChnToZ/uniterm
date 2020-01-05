@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell, WebContents } from 'electron';
+import isSquirrelStartup from 'electron-squirrel-startup';
 import { dirname, relative as relativePath, resolve as resolvePath } from 'path';
 import yargs from 'yargs';
 import { configFile, ConfigFile, configFilePath, loadConfig, reloadConfigPath } from './config';
@@ -9,6 +10,8 @@ import { register as registerProtocol } from './protocol';
 import { PtyTerminalOptions } from './terminals/pty';
 import { connectToClient } from './terminals/uachost';
 import { packageJson, versionString } from './version';
+
+if(isSquirrelStartup) process.exit(0);
 
 const windows: { [id: number]: BrowserWindow } = {};
 const readyWindowIds = new Set<number>();

@@ -125,3 +125,8 @@ declare module 'argv-split' {
   function argvSplit(argv: string): string[];
   export = argvSplit;
 }
+
+declare module 'electron-squirrel-startup' {
+  const isSquirrelStartup: boolean;
+  export = isSquirrelStartup;
+}

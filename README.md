@@ -2,7 +2,7 @@
 
 An evolution of Uniterm pseudo terminal emulator.
 
-![Preview](.preview.png)
+![Preview](.intro/preview.png)
 
 Difference between Uniterm2 and old Uniterm:
 - Uniterm2 is based on xterm.js and the old one is Google's hterm.
@@ -80,6 +80,9 @@ When it asks for such permission, just allow it or it will not work.
 You may also want to launch a shell in administrator mode. Even in Windows platform,
 you may use `sudo` prefix to do so (like `uniterm [options] [--] sudo [shell] [args..]`).
 
+Since version 0.18, you can right-click on the `+` button to customize newly opened tab such as changing environment variable,
+working directory before launch anything new.
+
 ## Modding
 
 It is quite tricky but not very hard to try it yourself. The mod files themselves
@@ -99,8 +102,8 @@ it wrotes and add the filename under the mods field.
 When you saved the config file, the terminal should immediately load/reloads
 all mod files.
 
-Here has an example working mod, which make all the tabs reorderable by dragging them:
-https://gist.github.com/JLChnToZ/f9e6ce2edf40820fe276a92c65b119bc
+Here has an example working mod, which displays terminal size at the corner:
+https://gist.github.com/JLChnToZ/7514cac109d5c3131acbac0b0523d9af
 
 ## License
 
