@@ -1,11 +1,16 @@
-import Electron, { MainInterface, remote } from 'electron';
+export const electronEnabled = process.env.ELECTRON_RUN_AS_NODE !== '1';
 
-export const electron: MainInterface = {} as any;
+export const electron: Electron.MainInterface = {} as any;
 
-// Clone electron namespace
-if(remote)
-  assignProperties(electron, remote);
-assignProperties(electron, Electron);
+if(electronEnabled) {
+  // tslint:disable-next-line: no-var-requires
+  const common = require('electron');
+  // Clone electron namespace
+  if(common.remote)
+    assignProperties(electron, common.remote);
+  assignProperties(electron, common);
+}
+
 
 function assignProperties(src: any, target: any) {
   const props = Object.getOwnPropertyDescriptors(target);

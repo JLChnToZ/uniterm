@@ -8,7 +8,6 @@ import { TerminalLaunchOptions } from './interfaces';
 import { ensureDirectory, existsAsync, isExeAsync, lstatAsync, tryResolvePath } from './pathutils';
 import { register as registerProtocol } from './protocol';
 import { PtyTerminalOptions } from './terminals/pty';
-import { connectToClient } from './terminals/uachost';
 import { packageJson, versionString } from './version';
 
 if(isSquirrelStartup) process.exit(0);
@@ -81,7 +80,6 @@ const args = yargs
       describe: 'Keep 3D API enable even GPU process crashes too frequently. ' +
         'This flag only have effect when the first Uniterm window launches.',
     },
-    'pipe': { hidden: true, string: true },
   })
   .version(versionString)
   .help();
@@ -121,8 +119,6 @@ interface Arguments {
    * This flag only have effect when the first Uniterm window launches.
    */
   'disable-domain-blocking-for-3d-apis'?: boolean;
-  /** IPC pipe path, for launching the shell with privaged permissions. */
-  pipe?: string;
 }
 
 const argv: yargs.Arguments<Arguments> = app.isPackaged ?
@@ -145,10 +141,7 @@ let loadConfigPromise: Promise<ConfigFile> | undefined;
   }
 })(argv['user-data'] || process.env.UNITERM_USER_DATA);
 
-if(argv.pipe) {
-  app.disableHardwareAcceleration();
-  connectToClient(argv.pipe);
-} else if(argv.config || argv['reset-config'])
+if(argv.config || argv['reset-config'])
   (async (resetConfig: boolean) => {
     try {
       await loadConfig(false, resetConfig);

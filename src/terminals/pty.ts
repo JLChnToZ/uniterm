@@ -3,11 +3,8 @@ import { IPty, spawn } from 'node-pty';
 import { basename, relative } from 'path';
 import escape from 'shell-escape';
 import { trueCasePath } from 'true-case-path';
-import { whichAsync } from '../pathutils';
-import { electron } from '../remote-wrapper';
+import { exePath, whichAsync } from '../pathutils';
 import { ANSI_RESET, TerminalBase, TerminalOptions } from './base';
-
-const exePath = electron.app.getPath('exe');
 
 export interface PtyTerminalOptions extends TerminalOptions {
   experimentalUseConpty?: boolean;

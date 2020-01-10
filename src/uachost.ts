@@ -1,9 +1,9 @@
 import { createDecodeStream, createEncodeStream } from 'msgpack-lite';
 import { connect as connectServer } from 'net';
 import { join as joinPath } from 'path';
-import { createBackend } from '.';
-import { TerminalLaunchOptions } from '../interfaces';
-import { TerminalBase } from './base';
+import { TerminalLaunchOptions } from './interfaces';
+import { createBackend } from './terminals';
+import { TerminalBase } from './terminals/base';
 
 export const enum CMDType {
   Data = 0x01,
@@ -27,6 +27,7 @@ export function connectToClient(path: string) {
   const client = connectServer(joinPath('\\\\.\\pipe', path));
   client
   .on('end', handleRemoteClose)
+  .on('close', handleRemoteClose)
   .pipe(createDecodeStream())
   .on('data', handleRequest);
   const writer = createEncodeStream();
@@ -93,3 +94,6 @@ export function connectToClient(path: string) {
     flushRequested = false;
   }
 }
+
+if(module === process.mainModule)
+  connectToClient(process.argv[2]);

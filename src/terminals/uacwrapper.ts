@@ -5,14 +5,20 @@ import { createDecodeStream, createEncodeStream, EncodeStream } from 'msgpack-li
 import { createServer, Server, Socket } from 'net';
 import { basename, join as joinPath } from 'path';
 import { promisify } from 'util';
-import { whichAsync } from '../pathutils';
-import { electron } from '../remote-wrapper';
+import { appPathResolver, exePath, whichAsync } from '../pathutils';
+import { CMDData, CMDType } from '../uachost';
 import { ANSI_CLS, ANSI_RESET, TerminalBase, TerminalOptions } from './base';
-import { CMDData, CMDType } from './uachost';
 
-const appPathResolver = electron.app.isPackaged ? '' : `\`"${electron.app.getAppPath()}\`"`;
-const exePath = electron.app.getPath('exe');
 const randomBytesAsync = promisify(randomBytes);
+
+const psLaunchArgs = [
+  '-NoLogo',
+  '-NoProfile',
+  '-ExecutionPolicy', 'Bypass',
+  '-WindowStyle', 'Hidden',
+  '-EncodedCommand',
+];
+const psLaunchArgsStr = psLaunchArgs.join(' ');
 
 function closeServer(this: Server) {
   this.close();
@@ -43,18 +49,16 @@ export class UACClient extends TerminalBase<EncodeStream> {
     this._pushData('SUDO: Waiting to confirm getting administrator privileges...\r\n');
     // Launch a clone with raised privileges via PowerShell.
     // This will triggers UAC prompt if user enables it.
-    execFile('powershell', [
-      '-NoLogo',
-      '-NoProfile',
-      '-NonInteractive',
-      '-ExecutionPolicy', 'Bypass',
-      '-WindowStyle', 'Hidden',
-      '-Command', ['Start-Process',
-        '-FilePath', `"${exePath}"`,
-        '-Verb', 'runAs',
-        '-ArgumentList', `"${appPathResolver} --pipe=${pipe}"`,
-      ].join(' '),
-    ]).once('exit', this.handleSpawnerClose);
+    const innerCmd = Buffer.from([
+      '$Env:ELECTRON_RUN_AS_NODE = 1',
+      `Start-Process -FilePath '${exePath}' -ArgumentList '"${joinPath(appPathResolver, 'lib/uachost')}" ${pipe}'`,
+    ].join(';'), 'utf16le',
+    ).toString('base64');
+    const outerCmd = Buffer.from(
+      `Start-Process -FilePath powershell -Verb RunAs -WindowStyle Hidden -ArgumentList '${psLaunchArgsStr} ${innerCmd}'`,
+      'utf16le',
+    ).toString('base64');
+    execFile('powershell', psLaunchArgs.concat([outerCmd])).once('exit', this.handleSpawnerClose);
   }
 
   public resize(cols: number, rows: number) {
@@ -87,6 +91,8 @@ export class UACClient extends TerminalBase<EncodeStream> {
     .on('data', this.handleResponse);
     this.pty = createEncodeStream();
     this.pty.pipe(client);
+    if(!this.env.ELECTRON_RUN_AS_NODE)
+      this.env.ELECTRON_RUN_AS_NODE = '0';
     this.writeToRemote(CMDType.Spawn, {
       path: this.path,
       argv: this.argv,

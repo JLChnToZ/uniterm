@@ -4,6 +4,7 @@ import isExe from 'isexe';
 import { delimiter, dirname, resolve as resolvePath, sep } from 'path';
 import { promisify } from 'util';
 import which from 'which';
+import { electron, electronEnabled } from './remote-wrapper';
 
 export const readFileAsync = promisify(readFile);
 export const writeFileAsync = promisify(writeFile);
@@ -12,6 +13,12 @@ export const mkdirAsync = promisify(mkdir);
 export const lstatAsync = promisify(lstat);
 export const isExeAsync = promisify(isExe);
 export const whichAsync = promisify(which);
+
+export const exePath = (() => {
+  if(electronEnabled)
+    return electron.app.getPath('exe');
+  return which.sync(process.argv[0]);
+})();
 
 // Function borrowed from wslpty
 export async function resolveWslPath(originalPath: string): Promise<string> {
@@ -47,9 +54,9 @@ export function fixPath(env: { [key: string]: string }) {
   for (const key of Object.keys(process.env)) {
     if(!/^path$/i.test(key)) continue;
     if(env[key])
-      env[key] += delimiter + dirname(process.argv0);
+      env[key] += delimiter + dirname(exePath);
     else
-      env[key] = process.env[key] + delimiter + dirname(process.argv0);
+      env[key] = process.env[key] + delimiter + dirname(exePath);
   }
   return env;
 }
@@ -71,3 +78,17 @@ export async function ensureDirectory(dir: string) {
       await mkdirAsync(joint);
   }
 }
+
+export const isPackaged = (() => {
+  if(process.mainModule && process.mainModule.filename.indexOf('app.asar') >= 0)
+    return true;
+  else if(process.argv.filter(a => a.indexOf('app.asar') !== -1).length > 0)
+    return true;
+  return false;
+})();
+
+export const appPathResolver = (() => {
+  if(electronEnabled)
+    return electron.app.getAppPath();
+  return resolvePath(__dirname, '..');
+})();
