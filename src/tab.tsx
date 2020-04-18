@@ -83,7 +83,7 @@ export class Tab implements IDisposable {
     this.active = true;
     tabContainer.appendChild(this.tabElement = <a className="item"
       onclick={Tab.handleTabClick}
-      onmouseup={Tab.handleTabMouseUp}
+      onauxclick={Tab.handleTabMouseUp}
       draggable>
       <span className="icon">{'\ufbab'}</span>
       {this.tabContentText = <span className="title-text" /> as HTMLElement}
