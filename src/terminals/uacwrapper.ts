@@ -3,7 +3,7 @@ import { randomBytes } from 'crypto';
 import defaultShell from 'default-shell';
 import { createDecodeStream, createEncodeStream, EncodeStream } from 'msgpack-lite';
 import { createServer, Server, Socket } from 'net';
-import { basename, join as joinPath } from 'path';
+import { basename, dirname, join as joinPath, relative } from 'path';
 import { promisify } from 'util';
 import { appPathResolver, exePath, whichAsync } from '../pathutils';
 import { CMDData, CMDType } from '../uachost';
@@ -49,9 +49,11 @@ export class UACClient extends TerminalBase<EncodeStream> {
     this._pushData('SUDO: Waiting to confirm getting administrator privileges...\r\n');
     // Launch a clone with raised privileges via PowerShell.
     // This will triggers UAC prompt if user enables it.
+    const exeDir = dirname(exePath);
+    const appPath = relative(exeDir, joinPath(appPathResolver, 'lib/uachost'));
     const innerCmd = Buffer.from([
       '$Env:ELECTRON_RUN_AS_NODE = 1',
-      `Start-Process -FilePath '${exePath}' -ArgumentList '"${joinPath(appPathResolver, 'lib/uachost')}" ${pipe}'`,
+      `Start-Process -FilePath '${exePath}' -WorkingDirectory '${exeDir}' -ArgumentList '${appPath} ${pipe}'`,
     ].join(';'), 'utf16le',
     ).toString('base64');
     const outerCmd = Buffer.from(
@@ -92,7 +94,7 @@ export class UACClient extends TerminalBase<EncodeStream> {
     this.pty = createEncodeStream();
     this.pty.pipe(client);
     if(!this.env.ELECTRON_RUN_AS_NODE)
-      this.env.ELECTRON_RUN_AS_NODE = '0';
+      this.env.ELECTRON_RUN_AS_NODE = '';
     this.writeToRemote(CMDType.Spawn, {
       path: this.path,
       argv: this.argv,
