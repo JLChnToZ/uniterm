@@ -5,7 +5,6 @@ import {
   MenuItem,
   MenuItemConstructorOptions,
 } from 'electron';
-import { openProcessManager } from 'electron-process-manager';
 import { electron } from './remote-wrapper';
 
 export interface CustomMenuExtention {
@@ -22,7 +21,6 @@ export const defaultContextMenuTemplateBase: CustomMenuOption[] = [
   { role: 'resetZoom' },
   { type: 'separator' },
   { role: 'toggleDevTools' },
-  { label: 'Open Process Manager', click: () => openProcessManager() },
 ];
 
 export const defaultReadonlyContextMenuTemplate: CustomMenuOption[] = [
