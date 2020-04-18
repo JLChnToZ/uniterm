@@ -178,6 +178,10 @@ misc:
     # This option only applies to new windows.
     transparent: false # default: false
 
+    # Enables experimental WebGL renderer on xtermjs.
+    # This option do not affect currently opening terminals.
+    webGL: false # default: false
+
 # Mod files (*.js), will be loaded into all windows when the config file load/reloads
 # The load path is relative to $relative_path
 mods:

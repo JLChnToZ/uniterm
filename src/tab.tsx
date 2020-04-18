@@ -7,6 +7,7 @@ import { debounceTime } from 'rxjs/operators';
 import { IDisposable, ITerminalOptions, Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
+import { WebglAddon } from 'xterm-addon-webgl';
 import { configFile } from './config';
 import { bind, readonly } from './decorators';
 import { getAsStringAsync, interceptEvent } from './domutils';
@@ -99,6 +100,8 @@ export class Tab implements IDisposable {
     /> as HTMLElement;
     contentContainer.appendChild(this.tabContent);
     this.terminal.open(this.tabContent);
+    if(configFile && configFile.misc && configFile.misc.webGL)
+      this.terminal.loadAddon(new WebglAddon());
     this.terminal.element.addEventListener('mouseup', e => {
       if(e.button !== 1 || !this.terminal.hasSelection()) return;
       interceptEvent(e);

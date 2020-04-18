@@ -13,6 +13,7 @@ export interface ConfigFile {
     initialRows?: number;
     vibrancy?: boolean;
     transparent?: boolean;
+    webGL?: boolean;
   };
   mods?: string[];
 }
