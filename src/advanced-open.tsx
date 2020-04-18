@@ -18,7 +18,7 @@ let cwd = remote.app.getPath('home');
 let env: any;
 let tempEnv: any;
 const launchBar = document.body.appendChild(
-  <div className="toolbar hidden">
+  <div className="toolbar hidden"><div className="inner">
     <a className="icon item" title="Select Shell" onclick={selectShell}>{'\uf68c'}</a>
     {launch = <input type="text" className="search" placeholder={defaultShell} onkeydown={e => {
       switch(e.which) {
@@ -69,7 +69,7 @@ const launchBar = document.body.appendChild(
     <a className="icon item" title="Launch in New Tab" onclick={() => doLaunch(false)}>{'\ufc5a'}</a>
     <a className="icon item" title="Launch in New Window" onclick={() => doLaunch(true)}>{'\ufab0'}</a>
     <a className="icon item" title="Hide" onclick={toggleOpen}>{'\uf85f'}</a>
-  </div> as HTMLDivElement,
+  </div></div> as HTMLDivElement,
 );
 const envControl = document.body.appendChild(
   <textarea className="hidden prompt-field" onkeydown={e => {

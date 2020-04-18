@@ -8,7 +8,7 @@ const searchOptions: ISearchOptions = {};
 
 let search: HTMLInputElement;
 const searchBar = document.body.appendChild(
-  <div className="toolbar hidden">
+  <div className="toolbar hidden"><div className="inner">
     {search = <input type="search" className="search" placeholder="Search" oninput={() => {
       doSearch(true);
     }} onkeydown={e => {
@@ -31,7 +31,7 @@ const searchBar = document.body.appendChild(
     <a className="icon item" title="Find Previous" onclick={() => doSearch(false)}>{'\uf55c'}</a>
     <a className="icon item" title="Find Next" onclick={() => doSearch(true)}>{'\uf544'}</a>
     <a className="icon item" title="Hide" onclick={toggleSearch}>{'\uf85f'}</a>
-  </div> as HTMLDivElement,
+  </div></div> as HTMLDivElement,
 );
 
 if(Tab.activeTab)

@@ -77,27 +77,36 @@ body::after {
   height: 100%;
 }
 
-.header, .toolbar {
+.header, .toolbar .inner {
   display: flex;
   flex-direction: row;
 }
 
-.toolbar, .prompt-field {
+.toolbar .inner, .toolbar::before, .prompt-field {
   position: fixed;
   top: 3em;
   left: 0;
   right: 0;
+  transition-property: top, height, opacity;
+  transition-duration: 0.5s;
+}
+
+.toolbar .inner, .prompt-field {
   backdrop-filter: blur(0.3em);
   background-color: #0008;
   border: solid 1px #FFF8;
   border-left: none;
   border-right: none;
-  transition-property: top, height, opacity;
-  transition-duration: 0.5s;
 }
 
-.toolbar {
+.toolbar .inner {
   z-index: 20;
+}
+
+.toolbar::before {
+  content: '';
+  z-index: -10;
+  height: 3em;
 }
 
 .prompt-field {
@@ -204,7 +213,13 @@ body::after {
 
 .toolbar.hidden, .prompt-field.hidden {
   display: block;
+}
+
+.toolbar.hidden .inner, .toolbar.hidden::before, .prompt-field.hidden {
   opacity: 0;
+}
+
+.toolbar.hidden .inner, .toolbar.hidden::before {
   top: -3em;
 }
 

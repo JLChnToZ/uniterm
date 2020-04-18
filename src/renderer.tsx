@@ -102,7 +102,7 @@ events.on('config', () => {
 });
 
 const colorRuleNormal = (dynamicStyle.cssRules[
-  dynamicStyle.insertRule('html, body {}')
+  dynamicStyle.insertRule('html, body, .vibrant:not(.maximized) .toolbar::before {}')
 ] as CSSStyleRule).style;
 const colorRuleVibrant = (dynamicStyle.cssRules[
   dynamicStyle.insertRule('.vibrant:not(.maximized) body {}')
