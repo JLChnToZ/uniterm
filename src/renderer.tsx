@@ -115,16 +115,18 @@ function replaceBodyColor(bgColor?: string, fgColor?: string) {
 }
 
 function reloadTerminalConfig(options: ITerminalOptions) {
+  if(options.theme) {
+    const { theme } = options;
+    replaceBodyColor(theme.background, theme.foreground);
+    if(theme.background && options.allowTransparency)
+      theme.background = TinyColor(theme.background).setAlpha(0).toString();
+  } else
+    replaceBodyColor();
   if(Tab.tabCount)
     for(const tab of Tab.allTabs()) {
       tab.updateSettings(options);
       if(tab.active) tab.fit();
     }
-  if(options.theme) {
-    const { theme } = options;
-    replaceBodyColor(theme.background, theme.foreground);
-  } else
-    replaceBodyColor();
 }
 
 ipcRenderer.on('create-terminal', (e, options: TerminalLaunchOptions) =>
