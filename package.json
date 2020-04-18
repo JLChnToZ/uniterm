@@ -1,7 +1,7 @@
 {
   "name": "uniterm",
   "productName": "uniterm",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "description": "Universal Terminal Emulator",
   "main": "lib/main.js",
   "scripts": {
