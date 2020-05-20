@@ -1,4 +1,4 @@
-import codeToSignal = require('code-to-signal');
+import codeToSignal from 'code-to-signal';
 import { clipboard, remote, shell } from 'electron';
 import h from 'hyperscript';
 import { basename } from 'path';
@@ -6,6 +6,7 @@ import { fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { IDisposable, ITerminalOptions, Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { LigaturesAddon } from 'xterm-addon-ligatures';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import { WebglAddon } from 'xterm-addon-webgl';
 import { configFile } from './config';
@@ -102,6 +103,7 @@ export class Tab implements IDisposable {
     this.terminal.open(this.tabContent);
     if(configFile && configFile.misc && configFile.misc.webGL)
       this.terminal.loadAddon(new WebglAddon());
+    this.terminal.loadAddon(new LigaturesAddon());
     this.terminal.element.addEventListener('mouseup', e => {
       if(e.button !== 1 || !this.terminal.hasSelection()) return;
       interceptEvent(e);

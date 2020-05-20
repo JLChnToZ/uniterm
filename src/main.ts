@@ -146,7 +146,7 @@ if(argv.config || argv['reset-config'])
     try {
       await loadConfig(false, resetConfig);
       if(argv.config)
-        shell.openItem(configFilePath);
+        shell.openExternal(configFilePath);
     } catch(e) {
       console.error(e.message || e);
     }
@@ -161,6 +161,8 @@ else if(!argv.isolated && !app.requestSingleInstanceLock()) {
     app.disableHardwareAcceleration();
   if(argv['disable-domain-blocking-for-3d-apis'])
     app.disableDomainBlockingFor3DAPIs();
+  // HACK: Once Node-PTY is ready, remove the below line
+  app.allowRendererProcessReuse = false;
   loadConfigPromise = loadConfig();
   args.exitProcess(false);
   const workingDir = process.cwd();
@@ -192,7 +194,7 @@ else if(!argv.isolated && !app.requestSingleInstanceLock()) {
     } else
       e.sender.send('create-terminal', {});
   }).on('show-config', () =>
-    shell.openItem(configFilePath),
+    shell.openExternal(configFilePath),
   ).on('create-terminal-request', async (_, options: TerminalLaunchOptions) =>
     (await getWindow(true)).send('create-terminal', options),
   );
