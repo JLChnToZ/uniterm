@@ -20,7 +20,7 @@ let tempEnv: any;
 const launchBar = document.body.appendChild(
   <div className="toolbar hidden"><div className="inner">
     <a className="icon item" title="Select Shell" onclick={selectShell}>{'\uf68c'}</a>
-    {launch = <input type="text" className="search" placeholder={defaultShell} onkeydown={e => {
+    {launch = <input type="text" className="open input" placeholder={defaultShell} onkeydown={e => {
       switch(e.which) {
         default: return;
         case 27: /* Escape */ toggleOpen(); break;
