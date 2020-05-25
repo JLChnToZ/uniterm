@@ -9,7 +9,7 @@ const searchOptions: ISearchOptions = {};
 let search: HTMLInputElement;
 const searchBar = document.body.appendChild(
   <div className="toolbar hidden"><div className="inner">
-    {search = <input type="search" className="search" placeholder="Search" oninput={() => {
+    {search = <input type="search" className="search input" placeholder="Search" oninput={() => {
       doSearch(true);
     }} onkeydown={e => {
       switch(e.which) {

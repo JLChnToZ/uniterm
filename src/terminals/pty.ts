@@ -1,4 +1,5 @@
 import defaultShell from 'default-shell';
+import { getPriority, setPriority } from 'os';
 import { IPty, spawn } from 'node-pty';
 import { basename, relative } from 'path';
 import escape from 'shell-escape';
@@ -8,13 +9,22 @@ import { ANSI_RESET, TerminalBase, TerminalOptions } from './base';
 
 export interface PtyTerminalOptions extends TerminalOptions {
   experimentalUseConpty?: boolean;
-}
+} 
 
 export class PtyShell extends TerminalBase<IPty> {
   private experimentalUseConpty?: boolean;
 
-  get pid() { return this.pty ? this.pty.pid : undefined; }
-  get process() { return this.pty ? this.pty.process : undefined; }
+  public get pid() { return this.pty ? this.pty.pid : undefined; }
+  public get process() { return this.pty ? this.pty.process : undefined; }
+
+  public get priority() {
+    const pid = this.pty?.pid;
+    return pid ? getPriority(pid) : 0;
+  }
+  public set priority(value: number) {
+    const pid = this.pty?.pid;
+    if(pid) setPriority(pid, value);
+  }
 
   constructor(options?: TerminalOptions) {
     super(options);

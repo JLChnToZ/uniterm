@@ -30,6 +30,8 @@ export abstract class TerminalBase<TPty> extends Duplex {
 
   private buffered?: any[];
 
+  public abstract priority: number;
+
   protected constructor(options?: TerminalOptions) {
     super(options);
     if(options) {

@@ -6,7 +6,10 @@ import { ANSI_RESET, TerminalBase, TerminalOptions } from './base';
 export class WslPtyShell extends TerminalBase<IPty> {
   get process() { return this.pty ? (this.pty.process || 'WSL Shell') : undefined; }
 
-  constructor(options?: TerminalOptions) {
+  public get priority() { return 0; }
+  public set priority(_: number) {}
+
+  public constructor(options?: TerminalOptions) {
     super(options);
 
     // Pass ENV to WSL

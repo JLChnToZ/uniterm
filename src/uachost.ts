@@ -9,6 +9,7 @@ export const enum CMDType {
   Data = 0x01,
   Resize = 0x02,
   Spawn = 0x03,
+  Priority = 0x04,
   Error = 0x7E,
   Exit = 0x7F,
 }
@@ -19,6 +20,7 @@ export type CMDData =
   [CMDType.Spawn, TerminalLaunchOptions] |
   [CMDType.Error, string] |
   [CMDType.Exit, number, number] |
+  [CMDType.Priority, number] |
   [CMDType, ...any[]];
 
 export function connectToClient(path: string) {
@@ -48,6 +50,10 @@ export function connectToClient(path: string) {
         case CMDType.Data:
           if(!host) throw new Error('Host is not spawned.');
           host.write(data[1]);
+          break;
+        case CMDType.Priority:
+          host.priority = data[1];
+          writeAndFlush(CMDType.Priority, host.priority);
           break;
         case CMDType.Resize:
           if(!host) throw new Error('Host is not spawned.');

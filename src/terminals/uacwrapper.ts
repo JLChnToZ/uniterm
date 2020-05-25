@@ -5,6 +5,7 @@ import { createDecodeStream, createEncodeStream, EncodeStream } from 'msgpack-li
 import { createServer, Server, Socket } from 'net';
 import { basename, dirname, join as joinPath, relative } from 'path';
 import { promisify } from 'util';
+import { bind, readonly } from '../decorators';
 import { appPathResolver, exePath, whichAsync } from '../pathutils';
 import { CMDData, CMDType } from '../uachost';
 import { ANSI_CLS, ANSI_RESET, TerminalBase, TerminalOptions } from './base';
@@ -26,14 +27,18 @@ function closeServer(this: Server) {
 
 export class UACClient extends TerminalBase<EncodeStream> {
   private flushRequested?: boolean;
+  private _priority: number = 0;
+
+  public get priority() {
+    return this._priority;
+  }
+  public set priority(value: number) {
+    this._priority = value;
+    this.writeToRemote(CMDType.Priority, value);
+  }
 
   public constructor(options?: TerminalOptions) {
     super(options);
-    this.handleConnection = this.handleConnection.bind(this);
-    this.handleResponse = this.handleResponse.bind(this);
-    this.handleExit = this.handleExit.bind(this);
-    this.handleSpawnerClose = this.handleSpawnerClose.bind(this);
-    this.flushEncoder = this.flushEncoder.bind(this);
   }
 
   public async spawn() {
@@ -85,6 +90,7 @@ export class UACClient extends TerminalBase<EncodeStream> {
     callback(null);
   }
 
+  @readonly @bind
   private handleConnection(client: Socket) {
     if(this.pty) return;
     client
@@ -107,6 +113,7 @@ export class UACClient extends TerminalBase<EncodeStream> {
     this._pushData(ANSI_CLS + ANSI_RESET);
   }
 
+  @readonly @bind
   private handleResponse(data: CMDData) {
     try {
       switch(data[0]) {
@@ -120,6 +127,9 @@ export class UACClient extends TerminalBase<EncodeStream> {
           this.emit('end', data[1], data[2]);
           if(this.pty) this.pty.end();
           break;
+        case CMDType.Priority:
+          this._priority = data[1];
+          break;
         default: throw new Error(`Invalid Code: ${data[0]}`);
       }
     } catch(error) {
@@ -131,6 +141,7 @@ export class UACClient extends TerminalBase<EncodeStream> {
     }
   }
 
+  @readonly @bind
   private handleSpawnerClose(code?: number) {
     if(code) {
       if(this.pty) {
@@ -141,6 +152,7 @@ export class UACClient extends TerminalBase<EncodeStream> {
     }
   }
 
+  @readonly @bind
   private handleExit() {
     delete this.pty;
   }
@@ -153,6 +165,7 @@ export class UACClient extends TerminalBase<EncodeStream> {
     process.nextTick(this.flushEncoder);
   }
 
+  @readonly @bind
   private flushEncoder() {
     if(!this.pty) return;
     this.pty.encoder.flush();

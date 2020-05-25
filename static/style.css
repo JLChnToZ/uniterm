@@ -94,6 +94,7 @@ body::after {
 .toolbar .inner, .prompt-field {
   backdrop-filter: blur(0.3em);
   background-color: #0008;
+  color: #FFF;
   border: solid 1px #FFF8;
   border-left: none;
   border-right: none;
@@ -192,7 +193,7 @@ body::after {
   min-width: 0;
 }
 
-.search {
+.input {
   outline: none;
   margin: 0.5em;
   flex-grow: 1;
@@ -201,8 +202,45 @@ body::after {
   color: #FFF;
 }
 
-.search::-webkit-input-placeholder {
+.input[type="search"]::-webkit-input-placeholder {
   color: #FFFA;
+}
+
+.input[type="range"] {
+  -webkit-appearance: none;
+}
+
+.input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  background: #FFF8;
+  border-radius: 2em;
+  width: 1em;
+  height: 1em;
+  margin-top: -0.5em;
+  cursor: grab;
+}
+
+.input[type="range"]::-webkit-slider-thumb:hover {
+  background: #FFFF;
+}
+
+.input[type="range"]::-webkit-slider-thumb:active:hover {
+  cursor: grabbing;
+}
+
+.input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 0.1em;
+  border-radius: 0.5em;
+  background: #4448;
+}
+
+.input[type="range"]::-webkit-slider-runnable-track:focus, .input[type="range"]::-webkit-slider-runnable-track:hover {
+  background: #AAA8;
+}
+
+.priority {
+  flex: 0 0 10em;
 }
 
 .hidden {
@@ -340,7 +378,6 @@ body::after {
 
 img[src^='fileicon://'] {
   max-width: 32px;
-  max-height: 16px;
   vertical-align: middle;
 }
 

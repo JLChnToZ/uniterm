@@ -12,6 +12,7 @@ import { WebglAddon } from 'xterm-addon-webgl';
 import { configFile } from './config';
 import { bind, readonly } from './decorators';
 import { getAsStringAsync, interceptEvent } from './domutils';
+import { togglePriority } from './pty-options';
 import { TerminalBase } from './terminals/base';
 
 export class Tab implements IDisposable {
@@ -58,6 +59,7 @@ export class Tab implements IDisposable {
   public terminal: Terminal;
   public pty: TerminalBase<unknown>;
   public disposables: IDisposable[];
+  private _titlePrefix?: string;
   public title: string;
   public defaultTitle: string;
   public tabElement: HTMLElement;
@@ -68,6 +70,12 @@ export class Tab implements IDisposable {
   private autoFit: FitAddon;
   private explicitTitle?: boolean;
   private pendingUpdateOptions?: ITerminalOptions;
+
+  public get titlePrefix() { return this._titlePrefix || ''; }
+  public set titlePrefix(value: string) {
+    this._titlePrefix = value;
+    this.handleTitleChange(this.title);
+  }
 
   constructor(tabContainer: HTMLElement, contentContainer: HTMLElement, pause?: boolean) {
     this.defaultTitle = 'Shell';
@@ -85,6 +93,10 @@ export class Tab implements IDisposable {
     tabContainer.appendChild(this.tabElement = <a className="item"
       onclick={Tab.handleTabClick}
       onauxclick={Tab.handleTabMouseUp}
+      oncontextmenu={e => {
+        e.preventDefault();
+        togglePriority();
+      }}
       draggable>
       <span className="icon">{'\ufbab'}</span>
       {this.tabContentText = <span className="title-text" /> as HTMLElement}
@@ -264,11 +276,12 @@ export class Tab implements IDisposable {
   @readonly @bind
   private handleTitleChange(title?: string) {
     this.title = title && title.trim() || this.processTitle || this.defaultTitle;
+    const fixedTitle = this._titlePrefix ? `${this._titlePrefix} - [${this.title}]` : this.title;
     if(this.tabContentText) {
-      this.tabContentText.textContent = this.title;
-      this.tabContentText.title = this.title;
+      this.tabContentText.textContent = fixedTitle;
+      this.tabContentText.title = fixedTitle;
     }
-    if(this.active) setTitle(this.title);
+    if(this.active) setTitle(fixedTitle);
   }
 
   @readonly @bind
