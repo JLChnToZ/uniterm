@@ -34,9 +34,9 @@ let isShown = false;
 const priorityBar = document.body.appendChild(
   <div className="toolbar hidden"><div className="inner">
     {customTitle}
-    <a className="icon item disabled" title="Low Priority">{'\ufb03'}</a>
-    {slider}
     <a className="icon item disabled" title="High Priority">{'\ufb02'}</a>
+    {slider}
+    <a className="icon item disabled" title="Low Priority">{'\ufb03'}</a>
     <a className="icon item" title="Apply" onclick={_ => {
       if(!tab) {
         slider.value = '0';
