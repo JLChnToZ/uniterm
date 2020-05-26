@@ -5,18 +5,19 @@ import { dirname } from 'path';
 import TinyColor from 'tinycolor2';
 import { resolve as resolvePath } from 'url';
 import { ITerminalOptions } from 'xterm';
-import { init as initOpen, toggleOpen } from './advanced-open';
 import { configFile, events, loadConfig, startWatch } from './config';
 import { init as initDraggable } from './dndtabs';
 import { acceptFileDrop, interceptDrop, interceptEvent, loadScript } from './domutils';
 import { TerminalLaunchOptions } from './interfaces';
 import { existsAsync, isExeAsync, lstatAsync } from './pathutils';
 import { requireLater } from './require-later';
-import { toggleSearch } from './search';
 import { Tab } from './tab';
 import { createBackend, register } from './terminals';
 import { checkVibrancy } from './vibrant';
 import { attach as attachWinCtrl, registerDraggableDoubleClick } from './winctrl';
+import { launchBar } from './toolbars/advanced-open';
+import { searchBar } from './toolbars/search';
+import './toolbars/pty-options';
 
 const homePath = remote.app.getPath('home');
 const browserWindow = remote.getCurrentWindow();
@@ -34,7 +35,7 @@ const header = layoutContainer.appendChild(<div className="header pty-tabs">
     }}
     oncontextmenu={e => {
       e.preventDefault();
-      toggleOpen();
+      launchBar.show();
     }}
     ondragenter={acceptFileDrop} ondragover={acceptFileDrop} ondrop={async e => {
     interceptEvent(e);
@@ -65,7 +66,7 @@ const header = layoutContainer.appendChild(<div className="header pty-tabs">
     e.dataTransfer.clearData();
   }} title="Add Tab">{'\uf914'}</a>
   <div className="drag" />
-  <a className="icon item" onclick={toggleSearch} title="Search">{'\uf848'}</a>
+  <a className="icon item" onclick={searchBar.show} title="Search">{'\uf848'}</a>
   <a className="icon item" onclick={() => ipcRenderer.send('show-config')} title="Config">{'\uf992'}</a>
 </div> as HTMLDivElement);
 
@@ -163,7 +164,7 @@ else
   ipcRenderer.send('ready');
 
 startWatch();
-initOpen(createTab);
+launchBar.createTab = createTab;
 initDraggable(tabContainer);
 
 // Expose everything for mods, except for requirable stuffs

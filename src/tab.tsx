@@ -12,7 +12,6 @@ import { WebglAddon } from 'xterm-addon-webgl';
 import { configFile } from './config';
 import { bind, readonly } from './decorators';
 import { getAsStringAsync, interceptEvent } from './domutils';
-import { togglePriority } from './pty-options';
 import { TerminalBase } from './terminals/base';
 
 export class Tab implements IDisposable {
@@ -93,10 +92,6 @@ export class Tab implements IDisposable {
     tabContainer.appendChild(this.tabElement = <a className="item"
       onclick={Tab.handleTabClick}
       onauxclick={Tab.handleTabMouseUp}
-      oncontextmenu={e => {
-        e.preventDefault();
-        togglePriority();
-      }}
       draggable>
       <span className="icon">{'\ufbab'}</span>
       {this.tabContentText = <span className="title-text" /> as HTMLElement}
