@@ -122,12 +122,17 @@ class PtyOptionsToolbar extends Toolbar {
   protected onShown() {
     super.onShown();
     const tab = Tab.activeTab;
-    this.slider.value = tab?.pty?.priority as any || '0';
-    this.customTitle.value = tab?.titlePrefix;
-    if(tab?.pause)
-      this.pause!.classList.add('active');
-    else
-      this.pause!.classList.remove('active');
+    if(this.slider)
+      this.slider.value = tab?.pty?.priority as any || '0';
+    if(this.customTitle)
+      this.customTitle.value = tab?.titlePrefix;
+    if(this.pause) {
+      const { classList } = this.pause;
+      if(tab?.pause)
+        classList.add('active');
+      else
+        classList.remove('active');
+    }
   }
 }
 
