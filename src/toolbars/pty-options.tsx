@@ -109,8 +109,8 @@ class PtyOptionsToolbar extends Toolbar {
       title: 'Process Execution Priority',
       message: 'Changing process execution priority may lead to system unstable. Continue?',
       buttons: ['Yes', 'No'],
-    })).response !== 0) return;
-    pty.priority = value;
+    })).response === 0)
+      pty.priority = value;
     if(this.slider)
       this.slider.value = pty.priority as any;
   }

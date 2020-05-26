@@ -138,10 +138,12 @@ export class Tab implements IDisposable {
       attachDisposable(pty, 'data', this.handleDataOutput),
       attachDisposable(pty, 'error', err =>
         this.printDisposableMessage(`Oops... error: ${err.message || err}`)),
-      attachDisposable(pty, 'end', this.pause ?
-        ((code?: number, signal?: number) =>
-          this.printDisposableMessage(`Program exits with ${code} ${codeToSignal(signal) || ''}`, false)) :
-        this.dispose),
+      attachDisposable(pty, 'end', (code?: number, signal?: number) => {
+        if(this.pause)
+          this.printDisposableMessage(`Program exits with ${code} ${codeToSignal(signal) || ''}`, false);
+        else
+          this.dispose();
+      }),
     );
     this.pty.resize(this.terminal.cols, this.terminal.rows);
     try {
