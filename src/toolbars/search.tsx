@@ -23,16 +23,21 @@ class Search extends Toolbar {
 
   protected render() {
     return [
-      this.search = <input type="search" className="search input" placeholder="Search" oninput={() => {
-        this.doSearch(true);
-      }} onkeydown={e => {
-        switch(e.which) {
-          default: return;
-          case 27: /* Escape */ this.hide(); break;
-          case 13: /* Enter */ this.doSearch(!e.shiftKey); break;
-        }
-        e.preventDefault();
-      }} /> as HTMLInputElement,
+      this.search = <input
+        type="search"
+        className="search input"
+        placeholder="Search"
+        spellcheck={false}
+        oninput={() => this.doSearch(true)}
+        onkeydown={e => {
+          switch(e.which) {
+            default: return;
+            case 27: /* Escape */ this.hide(); break;
+            case 13: /* Enter */ this.doSearch(!e.shiftKey); break;
+          }
+          e.preventDefault();
+        }}
+      /> as HTMLInputElement,
       <a className="icon item" title="Case Sensitive" onclick={e =>
         this.searchOptions.caseSensitive = (e.target as HTMLElement).classList.toggle('active')
       }>{'\uf612'}</a>,

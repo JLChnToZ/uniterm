@@ -44,6 +44,7 @@ class PtyOptionsToolbar extends Toolbar {
           case 13: case 27: this.hide(); break;
         }
       }}
+      spellcheck={false}
     /> as HTMLInputElement;
     this.slider = <input
       className="priority input"

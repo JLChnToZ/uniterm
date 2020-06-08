@@ -203,6 +203,8 @@ export class Tab implements IDisposable {
       }
     }
     this.autoFit.fit();
+    // Workaround for https://github.com/xtermjs/xterm.js/issues/291
+    (this.terminal as any)._onScroll.fire((this.terminal.buffer as any).viewportY);
     window.dispatchEvent(new CustomEvent('tabswitched', { detail: this }));
   }
 

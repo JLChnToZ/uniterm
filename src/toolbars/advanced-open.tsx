@@ -39,47 +39,56 @@ class AdvancedOpen extends Toolbar {
   protected render() {
     return [
       <a className="icon item" title="Select Shell" onclick={this.selectShell}>{'\uf68c'}</a>,
-      this.launch = <input type="text" className="open input" placeholder={defaultShell} onkeydown={e => {
-        switch(e.which) {
-          default: return;
-          case 27: /* Escape */ this.hide(); break;
-          case 13: /* Enter */ this.doLaunch(e.shiftKey); break;
-        }
-        e.preventDefault();
-      }} ondragenter={this.acceptDrop} ondragover={this.acceptDrop} ondrop={e => {
-        let intercept = false;
-        if(draggingTab) {
-          const tab = Tab.find(draggingTab);
-          if(tab && tab.pty) {
-            const { pty } = tab;
-            const args: string[] = [];
-            if(pty.rawPath) args.push(pty.rawPath);
-            args.push(pty.path, ...pty.argv);
-            this.launch.value = escape(args);
-            this.cwd = pty.cwd;
-            this.tempEnv = this.env = pty.env;
-            intercept = true;
+      this.launch = <input
+        type="text"
+        className="open input"
+        placeholder={defaultShell}
+        spellcheck={false}
+        onkeydown={e => {
+          switch(e.which) {
+            default: return;
+            case 27: /* Escape */ this.hide(); break;
+            case 13: /* Enter */ this.doLaunch(e.shiftKey); break;
           }
-        } else {
-          const { items } = e.dataTransfer;
-          if(items && items.length) {
-            // tslint:disable-next-line:prefer-for-of
-            for(let i = 0; i < items.length; i++) {
-              const item = items[i];
-              switch(item.kind) {
-                case 'file': {
-                  this.checkAndDropFile(item);
-                  intercept = true;
-                  break;
+          e.preventDefault();
+        }}
+        ondragenter={this.acceptDrop}
+        ondragover={this.acceptDrop}
+        ondrop={e => {
+          let intercept = false;
+          if(draggingTab) {
+            const tab = Tab.find(draggingTab);
+            if(tab && tab.pty) {
+              const { pty } = tab;
+              const args: string[] = [];
+              if(pty.rawPath) args.push(pty.rawPath);
+              args.push(pty.path, ...pty.argv);
+              this.launch.value = escape(args);
+              this.cwd = pty.cwd;
+              this.tempEnv = this.env = pty.env;
+              intercept = true;
+            }
+          } else {
+            const { items } = e.dataTransfer;
+            if(items && items.length) {
+              // tslint:disable-next-line:prefer-for-of
+              for(let i = 0; i < items.length; i++) {
+                const item = items[i];
+                switch(item.kind) {
+                  case 'file': {
+                    this.checkAndDropFile(item);
+                    intercept = true;
+                    break;
+                  }
                 }
               }
+              items.clear();
             }
-            items.clear();
           }
-        }
-        if(intercept) interceptEvent(e);
-        e.dataTransfer.clearData();
-      }} /> as HTMLInputElement,
+          if(intercept) interceptEvent(e);
+          e.dataTransfer.clearData();
+        }}
+      /> as HTMLInputElement,
       <a className="icon item" title="Change Working Directory" onclick={this.selectCWD}>{'\uf751'}</a>,
       <a className="icon item" title="Environment Variables" onclick={this.toggleEnvPrompt}>{'\ufb2d'}</a>,
       <a className="icon item" title="Auto Pause" onclick={e =>
