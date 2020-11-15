@@ -67,6 +67,7 @@ class PtyOptionsToolbar extends Toolbar {
       <a className="icon item" title="Higher Priority" onclick={() => this.movePriority(-1)}>{'\ufb02'}</a>,
       this.slider,
       <a className="icon item" title="Lower Priority" onclick={() => this.movePriority(1)}>{'\ufb03'}</a>,
+      <a className="icon item" title="Clear Console" onclick={e => this.clear(e.shiftKey)}>{'\uf89e'}</a>,
       this.pause,
     ];
   }
@@ -114,6 +115,15 @@ class PtyOptionsToolbar extends Toolbar {
       pty.priority = value;
     if(this.slider)
       this.slider.value = pty.priority as any;
+  }
+
+  private clear(reset?: boolean) {
+    const terminal = Tab.activeTab?.terminal;
+    if(terminal) {
+      if(reset) terminal.reset();
+      else terminal.clear();
+    }
+    this.hide();
   }
 
   private attach(tab: Tab) {

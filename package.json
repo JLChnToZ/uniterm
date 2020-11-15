@@ -51,7 +51,7 @@
     "typescript": "3"
   },
   "dependencies": {
-    "@jlchntoz/electron-vibrancy": "github:JLChnToZ/electron-vibrancy#86aa483",
+    "@jlchntoz/electron-vibrancy": "github:JLChnToZ/electron-vibrancy#86aa483d2569",
     "@types/gist-package-json": "gist:5c1cc527fe6b5b7dba41fec7fe54bf6e",
     "@types/hyperscript": "0.0.4",
     "@types/js-yaml": "3",
@@ -60,7 +60,7 @@
     "@types/shell-escape": "0",
     "@types/tinycolor2": "1",
     "@types/which": "1",
-    "@types/yargs": "15",
+    "@types/yargs": "^15.0.9",
     "about-window": "^1.13.2",
     "argv-split": "^2.0.1",
     "chokidar": "3",

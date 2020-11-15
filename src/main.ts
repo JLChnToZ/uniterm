@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, shell, WebContents } from 'electron';
 import isSquirrelStartup from 'electron-squirrel-startup';
 import { dirname, relative as relativePath, resolve as resolvePath } from 'path';
 import yargs from 'yargs';
+import { Arguments as YArguments } from 'yargs';
 import { configFile, ConfigFile, configFilePath, loadConfig, reloadConfigPath } from './config';
 import { register as registerContextMenu } from './default-context-menu';
 import { TerminalLaunchOptions } from './interfaces';
@@ -121,7 +122,7 @@ interface Arguments {
   'disable-domain-blocking-for-3d-apis'?: boolean;
 }
 
-const argv: yargs.Arguments<Arguments> = app.isPackaged ?
+const argv: YArguments<Arguments> = app.isPackaged ?
   args.parse(process.argv.slice(1)) :
   args.argv;
 
@@ -262,7 +263,7 @@ function getNewWindowPromise() {
   });
 }
 
-async function openShell(lArgv: yargs.Arguments<Arguments>, cwd: string) {
+async function openShell(lArgv: YArguments<Arguments>, cwd: string) {
   // Join env values
   const env: { [key: string]: string } = {};
   if(Array.isArray(lArgv.env) && lArgv.env.length)

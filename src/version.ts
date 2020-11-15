@@ -15,7 +15,7 @@ export const versionString = `${packageJson.name} v${packageJson.version}\n` +
   .map(compoment => `${compoment} v${process.versions[compoment]}`)
   .join('\n');
 
-export function showAbout() {
+export function showAbout(_menu: Electron.MenuItem, browserWindow: Electron.BrowserWindow) {
   showAboutWindow({
     icon_path: resolvePath(__dirname, '../icons/uniterm.png'),
     package_json_dir: rootPath,
@@ -23,6 +23,10 @@ export function showAbout() {
     use_version_info: true,
     win_options: {
       resizable: false,
+      maximizable: false,
+      minimizable: false,
+      modal: true,
+      parent: browserWindow,
     },
   });
 }
@@ -50,5 +54,5 @@ function preventNavigate(e: Electron.Event, url: string) {
 
 defaultContextMenuTemplateBase.push(
   { type: 'separator' },
-  { role: 'about', click: showAbout },
+  { label: `About ${packageJson.name}`, click: showAbout },
 );
