@@ -26,6 +26,13 @@ const dynamicStyle = document.head.appendChild(<style type="text/css" /> as HTML
 const tabContainer = <div className="flex" /> as HTMLDivElement;
 const layoutContainer = document.body.appendChild(<div className="layout-container" /> as HTMLDivElement);
 const header = layoutContainer.appendChild(<div className="header pty-tabs">
+  <a className="icon item" onclick={e => {
+    try {
+      const state = !browserWindow.isAlwaysOnTop();
+      browserWindow.setAlwaysOnTop(state);
+      (e.target as Node).textContent = state ? '\uf902' : '\uf903';
+    } catch {}
+  }} title="Always on Top">{'\uf903'}</a>
   {tabContainer}
   <a className="icon item" onclick={e => createTab({ cwd: homePath }, e.ctrlKey)}
     onmouseup={e => {
@@ -34,6 +41,7 @@ const header = layoutContainer.appendChild(<div className="header pty-tabs">
       createTab({ cwd: homePath }, true);
     }}
     oncontextmenu={e => {
+      if(e.ctrlKey) return;
       e.preventDefault();
       launchBar.show();
     }}

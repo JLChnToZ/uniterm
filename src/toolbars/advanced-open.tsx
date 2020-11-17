@@ -91,11 +91,11 @@ class AdvancedOpen extends Toolbar {
       /> as HTMLInputElement,
       <a className="icon item" title="Change Working Directory" onclick={this.selectCWD}>{'\uf751'}</a>,
       <a className="icon item" title="Environment Variables" onclick={this.toggleEnvPrompt}>{'\ufb2d'}</a>,
-      <a className="icon item" title="Auto Pause" onclick={e =>
+      <a className="icon item" title="Pause on Exit" onclick={e =>
         this.pause = (e.target as HTMLElement).classList.toggle('active')
       }>{'\uf8e7'}</a>,
       <a className="icon item" title="Launch in New Tab" onclick={() => this.doLaunch(false)}>{'\ufc5a'}</a>,
-      <a className="icon item" title="Launch in New Window" onclick={() => this.doLaunch(true)}>{'\ufab0'}</a>,
+      <a className="icon item" title="Launch in New Window" onclick={() => this.doLaunch(true)}>{'\uf465'}</a>,
     ];
   }
 

@@ -58,6 +58,7 @@ export class Tab implements IDisposable {
   public terminal: Terminal;
   public pty: TerminalBase<unknown>;
   public disposables: IDisposable[];
+  public acceptInput = true;
   private _titlePrefix?: string;
   public title: string;
   public defaultTitle: string;
@@ -285,6 +286,7 @@ export class Tab implements IDisposable {
 
   @readonly @bind
   private handleDataInput(text: string) {
+    if(!this.acceptInput) return;
     if(this.pty) this.pty.write(text, 'utf8');
     if(!this.explicitTitle) this.handleTitleChange();
   }

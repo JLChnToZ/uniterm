@@ -12,6 +12,7 @@ class PtyOptionsToolbar extends Toolbar {
   private customTitle?: HTMLInputElement;
   private slider?: HTMLInputElement;
   private pause?: HTMLAnchorElement;
+  private acceptInput?: HTMLAnchorElement;
 
   constructor() {
     super();
@@ -55,12 +56,12 @@ class PtyOptionsToolbar extends Toolbar {
       onchange={() => this.setPriority(this.slider!.valueAsNumber)}
     /> as HTMLInputElement;
     this.slider.setAttribute('list', sliderMarks.id);
-    this.pause = <a className="icon item" title="Auto Pause" onclick={e => {
+    this.pause = <a className="icon item" title="Pause on Exit" onclick={e => {
       const tab = Tab.activeTab;
       if(tab && (tab.pause = !tab.pause))
-        this.pause!.classList.add('active');
+        (e.target as HTMLElement).classList.add('active');
       else
-        this.pause!.classList.remove('active');
+        (e.target as HTMLElement).classList.remove('active');
     }}>{'\uf8e7'}</a> as HTMLAnchorElement;
     return [
       this.customTitle,
@@ -68,12 +69,17 @@ class PtyOptionsToolbar extends Toolbar {
       this.slider,
       <a className="icon item" title="Lower Priority" onclick={() => this.movePriority(1)}>{'\ufb03'}</a>,
       <a className="icon item" title="Clear Console" onclick={e => this.clear(e.shiftKey)}>{'\uf89e'}</a>,
+      <a className="icon item" title="Disable Input" onclick={e => {
+        const tab = Tab.activeTab;
+        (e.target as Node).textContent = (!tab || !(tab.acceptInput = !tab.acceptInput)) ? '\uf80f' : '\uf80b';
+      }}>{'\uf80b'}</a>,
       this.pause,
     ];
   }
 
   @readonly @bind
-  private onTabContextMenu(e: Event) {
+  private onTabContextMenu(e: MouseEvent) {
+    if(e.ctrlKey) return;
     e.preventDefault();
     if(Tab.activeTab.tabElement === e.currentTarget)
       this.show();
