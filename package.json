@@ -44,7 +44,7 @@
     "@typescript-eslint/eslint-plugin": "2",
     "@typescript-eslint/eslint-plugin-tslint": "2",
     "@typescript-eslint/parser": "2",
-    "electron": "9",
+    "electron": "13",
     "eslint": "7",
     "eslint-plugin-local": "1",
     "tslint": "6",
